@@ -1,7 +1,5 @@
 {GLOBAL = 0%}
 
-BuildSystem = 0%
-
 [KERNEL = 0%]
 
 Booting with GRUB = 0%
