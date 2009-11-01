@@ -1,0 +1,32 @@
+To participe, you need to respect some conventions :
+
+- Every comments are in the C syntax :
+/* your comments */
+
+And for multilines comments :
+/*
+ * your comments
+ */
+
+The C++ syntax is forbidden :
+// your comments
+
+- If a function doesn't require arguments, please type void :
+int my_function (void)
+
+- How to write a function ? :
+void my_function (void)
+{
+	/* do stuff */
+	return;
+}
+
+Everythings else is forbidden like :
+void my_function () {
+	// do stuff
+}
+
+- If you write a complex function, please write a Doxygen header to create a very fully
+documentation for every students, users who want to understand the source code of FreeX
+
+- We respect the C89 conventions, please read it

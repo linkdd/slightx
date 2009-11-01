@@ -14,11 +14,13 @@ all:
 	@make all -C boot
 	@make all -C kernel
 	@make all -C libc
+	@make all -C apps
 
 clean:
 	@make clean -C boot
 	@make clean -C kernel
 	@make clean -C libc
+	@make clean -C apps
 	@rm -rf bin/*
 
 install: all
