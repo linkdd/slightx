@@ -1,0 +1,2 @@
+FreeX is a free operating system developped in C and Assembly for x86 architectures.
+This OS is conform to the POSIX conventions. FreeX is based on a microkernel architecture.

@@ -1,0 +1,28 @@
+{GLOBAL = 0%}
+
+BuildSystem = 0%
+
+[KERNEL = 0%]
+
+Booting with GRUB = 0%
+Loading IDT = 0%
+Loading GDT = 0%
+Multitasking = 0%
+VFS = 0%
+
+[DRIVER = 0%]
+
+Keyboard = 0%
+VESA = 0%
+FS: ext2 = 0%
+FS: FAT32 = 0%
+FS: XFS = 0%
+FS: FreeX FS = 0%
+
+[LIBC = 0%]
+
+stdarg.c = 0%
+stdio.c = 0%
+stdlib.c = 0%
+string.c = 0%
+unistd.c = 0%
