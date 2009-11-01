@@ -19,6 +19,7 @@ clean:
 	@make clean -C boot
 	@make clean -C kernel
 	@make clean -C libc
+	@rm -rf bin/*
 
 install: all
 	@echo "Not yet implemented"
