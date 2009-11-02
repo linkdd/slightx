@@ -1,5 +1,5 @@
-SRC_C =
-SRC_AS =
+SRC_C = main.c screen.c
+SRC_AS = loader.asm
 OBJ = $(SRC_AS:.asm=.o) $(SRC_C:.c=.o)
 
 EXEC = kernel.bin

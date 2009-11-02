@@ -4,7 +4,7 @@ export CC = gcc
 export AS = nasm
 export LD = ld
 
-export CFLAGS = -fno-builtin -m32 -Wall -Werr -nostartfiles -nostdlib -g -c
+export CFLAGS = -fno-builtin -m32 -Wall -nostartfiles -nostdlib -nostdinc -g -c
 export ASFLAGS = -f elf
 export LDFLAGS = -melf_i386 -Ttext=100000 --entry=_start
 
