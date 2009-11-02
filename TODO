@@ -1,10 +1,11 @@
-{GLOBAL = 0%}
+{GLOBAL = 15%}
 
-[KERNEL = 0%]
+[KERNEL = 50%]
 
-Booting with GRUB = 0%
+Booting with GRUB = 100%
+Enable paging = 100%
+Loading GDT = 100%
 Loading IDT = 0%
-Loading GDT = 0%
 Multitasking = 0%
 VFS = 0%
 

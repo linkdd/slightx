@@ -1,5 +1,6 @@
 #include <multiboot.h>
 #include <screen.h>
+#include <mem.h>
 
 void kmain (struct multiboot_info *mbi, unsigned int magic)
 {
@@ -7,11 +8,14 @@ void kmain (struct multiboot_info *mbi, unsigned int magic)
 
 	if (magic != MULTIBOOT_HEADER_MAGIC)
 	{
-		print ("PANIC: MultiBoot header magic isn't correct.\n");
+		print ("PANIC: MultiBoot Header magic number isn't correct.\n");
+		print ("System halted.\n");
 		asm ("hlt");
 	}
 
-	print ((char *)mbi->cmdline);
+	init_paging ();
+	init_gdt ();
+
 	while (1);
 	return;
 }

@@ -6,7 +6,7 @@ export LD = ld
 
 export CFLAGS = -fno-builtin -m32 -Wall -nostartfiles -nostdlib -nostdinc -g -c
 export ASFLAGS = -f elf
-export LDFLAGS = -melf_i386 -Ttext=100000 --entry=_start
+export LDFLAGS = -melf_i386 -T linker.ld
 
 .PHONY: all clean install run
 
@@ -23,8 +23,10 @@ clean:
 	@make clean -C apps
 	@rm -rf bin/*
 
-install: all
-	@echo "Not yet implemented"
+install:
+	@mount -o loop bin/floppy.img mnt
+	@cp bin/kernel.bin mnt/sys/
+	@umount mnt
 
-run: install
-	@echo "Not yet implemented"
+run:
+	@qemu -fda bin/floppy.img
