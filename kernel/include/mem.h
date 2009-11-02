@@ -19,7 +19,6 @@ struct gdt_ptr
 	unsigned int base;
 } __attribute__ ((packed));
 
-void gdt_flush (void);
 void gdt_set_gate (int i, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran);
 void init_gdt (void);
 

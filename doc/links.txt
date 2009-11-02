@@ -1,0 +1,3 @@
+How to boot with GRUB : http://wiki.osdev.org/GRUB
+How to write a higher-half kernel : http://wiki.osdev.org/Higher_Half_With_GDT
+

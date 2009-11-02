@@ -24,9 +24,13 @@ clean:
 	@rm -rf bin/*
 
 install:
-	@mount -o loop bin/floppy.img mnt
+	@losetup /dev/loop0 bin/floppy.img
+	@mount /dev/loop0 mnt
 	@cp bin/kernel.bin mnt/sys/
-	@umount mnt
+	@umount /dev/loop0
+	@losetup -d /dev/loop0
 
 run:
-	@qemu -fda bin/floppy.img
+	@/sbin/losetup /dev/loop0 bin/floppy.img
+	@bochs -f bochsrc.txt
+	@/sbin/losetup -d /dev/loop0

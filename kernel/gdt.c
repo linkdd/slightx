@@ -8,8 +8,6 @@
 struct gdt_entry gdt[3];
 struct gdt_ptr gp;
 
-void gdt_flush (void);
-
 /* Init a descriptor */
 void gdt_set_gate (int i, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran)
 {
@@ -34,6 +32,14 @@ void init_gdt (void)
 	gdt_set_gate (1, 0, 0xFFFFFFFF, 0x9A, 0xCF); /* Code segment */
 	gdt_set_gate (2, 0, 0xFFFFFFFF, 0x92, 0xCF); /* Data segment */
 
-	gdt_flush ();
+	asm ("lgdtl (gp)");
+	asm ("movw $0x10, %ax\n"
+		 "movw %ax, %ds\n"
+		 "movw %ax, %es\n"
+		 "movw %ax, %fs\n"
+		 "movw %ax, %gs\n"
+		 "ljmp $0x08, $next\n"
+		 "next:\n");
+
 	return;
 }
