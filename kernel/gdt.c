@@ -31,15 +31,7 @@ void init_gdt (void)
 	gdt_set_gate (0, 0, 0, 0, 0);                /* NULL gate */
 	gdt_set_gate (1, 0, 0xFFFFFFFF, 0x9A, 0xCF); /* Code segment */
 	gdt_set_gate (2, 0, 0xFFFFFFFF, 0x92, 0xCF); /* Data segment */
-
-	asm ("lgdtl (gp)");
-	asm ("movw $0x10, %ax\n"
-		 "movw %ax, %ds\n"
-		 "movw %ax, %es\n"
-		 "movw %ax, %fs\n"
-		 "movw %ax, %gs\n"
-		 "ljmp $0x08, $next\n"
-		 "next:\n");
-
+	
+	gdt_flush ();
 	return;
 }

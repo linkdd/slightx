@@ -3,3 +3,4 @@ bin/
 bin/floppy.img
 bin/kernel.bin
 kernel/*.o
+*.swp

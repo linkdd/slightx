@@ -96,3 +96,29 @@ void print (char *str)
 	return;
 }
 
+void print_dec (int n)
+{
+	unsigned long int tmp;
+	char buf[64];
+	int i, j;
+
+	tmp = n;
+	i = 0;
+
+	do
+	{
+		tmp = n % 10;
+		buf[i++] = (tmp + '0');
+	} while (n /= 10);
+	buf[i--] = 0;
+
+	for (j = 0; j < i; ++j, --i)
+	{
+		tmp = buf[j];
+		buf[j] = buf[i];
+		buf[i] = tmp;
+	}
+
+	print (buf);
+}
+
