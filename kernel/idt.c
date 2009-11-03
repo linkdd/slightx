@@ -1,6 +1,7 @@
 #include <mem.h>
 #include <interrupts.h>
 
+extern struct exceptions_t exceptions[];
 struct idt_entry idt[256];
 struct idt_ptr p_idt;
 
@@ -23,7 +24,8 @@ void init_idt (void)
 	for (i = 0; i < 256; ++i)
 		idt_set_gate (i, (unsigned int) isr_handler, 0x08, 0x8E, 0);
 
-	
+	for (i = 0; exceptions[i].msg != NULL; ++i)
+		idt_set_gate (exceptions[i].i, exceptions[i].handler, 0x08, 0x08E, 0);
 
 	asm ("lidtl (p_idt)");
 }

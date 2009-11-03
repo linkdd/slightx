@@ -42,9 +42,20 @@ struct registers_t
 	unsigned int eip, cs, eflags, useresp, ss; /* pushed by the processor automatically */
 };
 
+struct exceptions_t
+{
+	int i;
+	char *msg;
+	enum { Fault, Trap, TrapOrFault, Abort, None } type;
+	unsigned int handler;
+};
+
 extern void gdt_flush (void);
 void gdt_set_gate (int i, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran);
 void init_gdt (void);
+
+void idt_set_gate (unsigned char i, unsigned int base, unsigned short sel, unsigned char flags, int user);
+void init_idt (void);
 
 void init_paging (void);
 

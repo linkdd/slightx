@@ -4,8 +4,8 @@
 
 Booting with GRUB = 100%
 Enable paging = 100%
-Loading GDT = 100%
-Loading IDT = 0%
+Loading GDT = 50%
+Loading IDT = 50%
 Multitasking = 0%
 VFS = 0%
 

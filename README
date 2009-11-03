@@ -1,2 +1,9 @@
 FreeX is a free operating system developped in C and Assembly for x86 architectures.
 This OS is conform to the POSIX conventions. FreeX is based on a microkernel architecture.
+
+- boot/ : This folder contains GRUB stage1 and stage2 and its config file menu.lst
+- kernel/ : Kernel's source
+- libc/ : The library to develop on FreeX
+- doc/ : Documentation I used to write FreeX, and Doxygen documentation
+- apps/ : Applications for FreeX
+- bin/ : Every binary files

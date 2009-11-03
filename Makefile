@@ -11,22 +11,22 @@ export LDFLAGS = -melf_i386 -T linker.ld
 .PHONY: all clean install run
 
 all:
-	@make all -C boot
 	@make all -C kernel
 	@make all -C libc
 	@make all -C apps
 
 clean:
-	@make clean -C boot
 	@make clean -C kernel
 	@make clean -C libc
 	@make clean -C apps
 	@rm -rf bin/*
 
 install:
-	@mount -o loop bin/floppy.img mnt
+	@losetup -o 32256 /dev/loop0 disk.img
+	@mount -t ext2 /dev/loop0 mnt
 	@cp bin/kernel.bin mnt/sys/
 	@umount mnt
+	@losetup -d /dev/loop0
 
 run:
-	@qemu -fda bin/floppy.img -m 512
+	@qemu -hda disk.img -m 512
