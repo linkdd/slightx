@@ -6,11 +6,11 @@ static char ky = 0;
 
 void clear (void)
 {
-	char *video;
+	char *video = (char *) RAMSCREEN;
+	int i;
 
-	for (video = (char *) (RAMSCREEN + 160);
-		 video < (char *) SCREENLIM;
-		 *video++ = 0);
+	for (i = 0; i < SIZESCREEN; ++i)
+		video[i] = 0;
 
 	kx = ky = 0;
 	return;

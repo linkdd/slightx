@@ -4,8 +4,8 @@
 
 void kmain (struct multiboot_info *mbi, unsigned int magic)
 {
-	*((char *) 0xB8000) = 'a';
 	clear ();
+	print ("FreeX: Starting up...\n");
 
 	if (magic != MULTIBOOT_HEADER_MAGIC)
 	{
@@ -14,8 +14,13 @@ void kmain (struct multiboot_info *mbi, unsigned int magic)
 		asm ("hlt");
 	}
 
+	print ("Initializing System Structures : ");
+
+	print ("Paging ");
 	init_paging ();
+	print ("GDT ");
 	init_gdt ();
+	print ("IDT\n");
 	init_idt ();
 
 	while (1);

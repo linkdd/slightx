@@ -21,5 +21,6 @@ extern void isr17 (void);
 extern void isr18 (void);
 
 void isr_handler (struct registers_t regs);
+void isr_error_handler (struct registers_t regs);
 
 #endif /* __INTERRUPTS_H */

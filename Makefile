@@ -19,12 +19,13 @@ clean:
 	@make clean -C kernel
 	@make clean -C libc
 	@make clean -C apps
-	@rm -rf bin/*
+	@make clean -C bin
 
 install:
 	@losetup -o 32256 /dev/loop0 disk.img
-	@mount -t ext2 /dev/loop0 mnt
-	@cp bin/kernel.bin mnt/sys/
+	@mount -t xfs /dev/loop0 mnt
+	@make install -C boot
+	@make install -C bin
 	@umount mnt
 	@losetup -d /dev/loop0
 

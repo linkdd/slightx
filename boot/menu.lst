@@ -1,4 +1,3 @@
 title  FreeX
 root   (hd0,0)
 kernel /sys/kernel.bin color=0xF
-boot

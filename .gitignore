@@ -1,6 +1,4 @@
-bochsout.txt
-bin/
-bin/floppy.img
 bin/kernel.bin
+bin/libc.a
 kernel/*.o
 *.swp

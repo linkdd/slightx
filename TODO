@@ -1,10 +1,10 @@
-{GLOBAL = 15%}
+{GLOBAL = 19%}
 
-[KERNEL = 50%]
+[KERNEL = 58%]
 
 Booting with GRUB = 100%
 Enable paging = 100%
-Loading GDT = 50%
+Loading GDT = 100%
 Loading IDT = 50%
 Multitasking = 0%
 VFS = 0%

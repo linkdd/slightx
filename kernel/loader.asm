@@ -1,4 +1,4 @@
-[bits 32]
+[BITS 32]
 [global start]
 [extern kmain]
 
@@ -19,12 +19,12 @@ MultiBootHeader:
 
 start:
 	lgdt [trickgdt]
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
+	mov cx, 0x10
+	mov ds, cx
+	mov es, cx
+	mov fs, cx
+	mov gs, cx
+	mov ss, cx
 
 	jmp 0x08:load
 load:
