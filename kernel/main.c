@@ -1,6 +1,8 @@
+#include <asm/asm.h>
 #include <multiboot.h>
 #include <screen.h>
 #include <mem.h>
+#include <timer.h>
 
 void kmain (struct multiboot_info *mbi, unsigned int magic)
 {
@@ -10,8 +12,7 @@ void kmain (struct multiboot_info *mbi, unsigned int magic)
 	if (magic != MULTIBOOT_HEADER_MAGIC)
 	{
 		printk ("PANIC: MultiBoot Header magic number isn't correct.\n");
-		printk ("System halted.\n");
-		asm ("hlt");
+		halt ();
 	}
 
 	printk ("Initializing System Structures : ");
@@ -20,12 +21,17 @@ void kmain (struct multiboot_info *mbi, unsigned int magic)
 	init_paging ();
 	printk ("GDT, ");
 	init_gdt ();
-	printk ("PIC, ");
-	init_pic ();
-	printk ("IDT\n\n");
+	printk ("IDT, ");
 	init_idt ();
+	printk ("PIC\n");
+	init_pic ();
 
-	detect_cpu ();	
+	printk ("Enable interrupts...\n");
+	sti ();
+
+	printk ("Initializing PIT to 50 Hz...\n");
+	init_timer (50);
+
 
 	while (1);
 	return;

@@ -5,7 +5,7 @@ export AS = nasm
 export LD = ld
 
 export CFLAGS = -fno-builtin -m32 -Wall -nostartfiles -nostdlib -nostdinc -g -c
-export ASFLAGS = -f elf
+export ASFLAGS = -f elf32
 export LDFLAGS = -melf_i386 -T linker.ld
 
 .PHONY: all clean install run
