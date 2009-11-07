@@ -16,7 +16,7 @@ VESA = 0%
 FS: ext2 = 0%
 FS: FAT32 = 0%
 FS: XFS = 0%
-FS: FreeX FS = 0%
+FS: SlightX FS = 0%
 
 [LIBC = 0%]
 
@@ -25,3 +25,9 @@ stdio.c = 0%
 stdlib.c = 0%
 string.c = 0%
 unistd.c = 0%
+
+-----------------------------
+
+(Applications)
+
+posix-test (100%) : Test the POSIX compliance

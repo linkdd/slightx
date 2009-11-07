@@ -27,6 +27,6 @@ void my_function () {
 }
 
 - If you write a complex function, please write a Doxygen header to create a very fully
-documentation for every students, users who want to understand the source code of FreeX
+documentation for every students, users who want to understand the source code of SlightX
 
 - We respect the C89 conventions, please read it

@@ -5,7 +5,7 @@
 void kmain (struct multiboot_info *mbi, unsigned int magic)
 {
 	clear ();
-	printk ("FreeX: Starting up...\n");
+	printk ("SlightX: Starting up...\n");
 
 	if (magic != MULTIBOOT_HEADER_MAGIC)
 	{
