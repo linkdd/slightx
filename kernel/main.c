@@ -5,23 +5,27 @@
 void kmain (struct multiboot_info *mbi, unsigned int magic)
 {
 	clear ();
-	print ("FreeX: Starting up...\n");
+	printk ("FreeX: Starting up...\n");
 
 	if (magic != MULTIBOOT_HEADER_MAGIC)
 	{
-		print ("PANIC: MultiBoot Header magic number isn't correct.\n");
-		print ("System halted.\n");
+		printk ("PANIC: MultiBoot Header magic number isn't correct.\n");
+		printk ("System halted.\n");
 		asm ("hlt");
 	}
 
-	print ("Initializing System Structures : ");
+	printk ("Initializing System Structures : ");
 
-	print ("Paging ");
+	printk ("Paging, ");
 	init_paging ();
-	print ("GDT ");
+	printk ("GDT, ");
 	init_gdt ();
-	print ("IDT\n");
+	printk ("PIC, ");
+	init_pic ();
+	printk ("IDT\n\n");
 	init_idt ();
+
+	detect_cpu ();	
 
 	while (1);
 	return;

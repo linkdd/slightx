@@ -1,4 +1,5 @@
 bin/kernel.bin
 bin/libc.a
-kernel/*.o
+bin/posix-test
+*.o
 *.swp

@@ -27,9 +27,7 @@ struct exceptions_t exceptions[] =
 
 void isr_handler (struct registers_t regs)
 {
-	print ("unhandled interrupt: ");
-	print_dec (regs.int_no);
-	print ("\n");
+	printk ("unhandled interrupt: %d\n", regs.int_no);
 	return;
 }
 
@@ -37,9 +35,8 @@ void isr_error_handler (struct registers_t regs)
 {
 	if (regs.int_no < 32)
 	{
-		print ("Error: ");
-		print (exceptions[regs.int_no].msg);
-		print ("\nSystem halted.\n");
+		printk ("Error: %d\n", exceptions[regs.int_no].msg);
+		printk ("System halted.\n");
 		asm ("hlt");
 	}
 	return;

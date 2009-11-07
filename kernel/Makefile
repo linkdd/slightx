@@ -1,4 +1,4 @@
-SRC_C = main.c screen.c gdt.c mem.c idt.c interrupts.c
+SRC_C = main.c screen.c mem/gdt.c mem/mem.c mem/idt.c interrupts.c sys/io.c sys/pic.c util.c cpu.c
 SRC_AS = loader.asm ints.asm
 OBJ = $(SRC_AS:.asm=.o) $(SRC_C:.c=.o)
 

@@ -59,4 +59,6 @@ void init_idt (void);
 
 void init_paging (void);
 
+void init_pic (void);
+
 #endif /* __MEM_H */
