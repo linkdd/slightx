@@ -1,46 +1,46 @@
 #include <sys/io.h>
 
-unsigned char inb (unsigned short port)
+uint8_t inb (uint16_t port)
 {
-	unsigned char toret;
-	asm ("inb %1, %0" : "=a"(toret) : "Nd"(port));
-	return toret;
+    uint8_t toret;
+    asm ("inb %1, %0" : "=a"(toret) : "Nd"(port));
+    return toret;
 }
 
-unsigned short inw (unsigned short port)
+uint16_t inw (uint16_t port)
 {
-	unsigned short toret;
-	asm ("inw %1, %0" : "=a"(toret) : "Nd"(port));
-	return toret;
+    uint16_t toret;
+    asm ("inw %1, %0" : "=a"(toret) : "Nd"(port));
+    return toret;
 }
 
-unsigned int ind (unsigned short port)
+uint32_t ind (uint16_t port)
 {
-	unsigned int toret;
-	asm ("inl %1, %0" : "=a"(toret) : "Nd"(port));
-	return toret;
+    uint32_t toret;
+    asm ("inl %1, %0" : "=a"(toret) : "Nd"(port));
+    return toret;
 }
 
-void outb (unsigned short port, unsigned char value)
+void outb (uint16_t port, uint8_t value)
 {
-	asm ("outb %0, %1" :: "a"(value), "Nd"(port));
-	return;
+    asm ("outb %0, %1" :: "a"(value), "Nd"(port));
+    return;
 }
 
-void outw (unsigned short port, unsigned short value)
+void outw (uint16_t port, uint16_t value)
 {
-	asm ("outw %0, %1" :: "a"(value), "Nd"(port));
-	return;
+    asm ("outw %0, %1" :: "a"(value), "Nd"(port));
+    return;
 }
 
-void outd (unsigned short port, unsigned int value)
+void outd (uint16_t port, uint32_t value)
 {
-	asm ("outl %0, %1" :: "a"(value), "Nd"(port));
-	return;
+    asm ("outl %0, %1" :: "a"(value), "Nd"(port));
+    return;
 }
 
 void iowait (void)
 {
-	outb (0x80, 0);
-	return;
+    outb (0x80, 0);
+    return;
 }

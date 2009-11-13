@@ -1,74 +1,72 @@
+MBOOT_PAGE_ALIGN    equ 1<<0    ; Load kernel and modules on a page boundary
+MBOOT_MEM_INFO      equ 1<<1    ; Provide your kernel with memory info
+MBOOT_HEADER_MAGIC  equ 0x1BADB002 ; Multiboot Magic value
+; NOTE: We do not use MBOOT_AOUT_KLUDGE. It means that GRUB does not
+; pass us a symbol table.
+MBOOT_HEADER_FLAGS  equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO
+MBOOT_CHECKSUM      equ -(MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
+
 [BITS 32]
-[global start]
-[extern kmain]
 
-; Setting up the Multiboot header
-MULTIBOOT_PAGE_ALIGN    equ 1<<0
-MULTIBOOT_MEMORY_INFO   equ 1<<1
-MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
-MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO
-MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+[GLOBAL mboot]
+[EXTERN code]
+[EXTERN bss]
+[EXTERN end]
 
-[section .text]
+mboot:
+    dd  MBOOT_HEADER_MAGIC      ; GRUB will search for this value on each
+                                ; 4-byte boundary in your kernel file
+    dd  MBOOT_HEADER_FLAGS      ; How GRUB should load your file / settings
+    dd  MBOOT_CHECKSUM          ; To ensure that the above values are correct
 
-ALIGN 4
-MultiBootHeader:
-	dd MULTIBOOT_HEADER_MAGIC
-	dd MULTIBOOT_HEADER_FLAGS
-	dd MULTIBOOT_CHECKSUM
+    dd  mboot                   ; Location of this descriptor
+    dd  code                    ; Start of kernel '.text' (code) section.
+    dd  bss                     ; End of kernel '.data' section.
+    dd  end                     ; End of kernel.
+    dd  start                   ; Kernel entry point (initial EIP).
+
+[GLOBAL start]
+[EXTERN kmain]
 
 start:
-	lgdt [trickgdt]
-	mov cx, 0x10
-	mov ds, cx
-	mov es, cx
-	mov fs, cx
-	mov gs, cx
-	mov ss, cx
+    push esp
+    push eax
+    push ebx
 
-	jmp 0x08:load
-load:
-	mov esp, stack
+    cli
+    call kmain
+    jmp $
 
-	push eax
-	push ebx
-	call kmain
 
-	jmp $
-end:
-	hlt
-	jmp end
-
-[global gdt_flush]
-[extern gp]
+[GLOBAL gdt_flush]    ; Allows the C code to call gdt_flush().
 
 gdt_flush:
-	lgdt [gp]
+    mov eax, [esp + 4]  ; Get the pointer to the GDT, passed as a parameter.
+    lgdt [eax]        ; Load the new GDT pointer
 
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
-	jmp 0x08:flush2
-flush2:
-	ret
+    mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
+    mov ds, ax        ; Load all data segment selectors
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+    jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
+.flush:
+    ret
 
-[section .setup]
+[GLOBAL idt_flush]    ; Allows the C code to call idt_flush().
 
-trickgdt:
-	dw gdt_end - gdt - 1
-	dd gdt
+idt_flush:
+    mov eax, [esp + 4]  ; Get the pointer to the IDT, passed as a parameter.
+    lidt [eax]        ; Load the IDT pointer.
+    ret
 
-gdt:
-	dd 0, 0                                            ; Null gate
-	db 0xFF, 0xFF, 0, 0, 0, 10011010b, 11001111b, 0x40 ; CS = 0x08, Base = 0x40000000, Limit = 0xFFFFFFFF, Type = 0x9A, Granularity = 0xCF
-	db 0xFF, 0xFF, 0, 0, 0, 10010010b, 11001111b, 0x40 ; DS = 0x10, Base = 0x40000000, Limit = 0xFFFFFFFF, Type = 0x92, Granularity = 0xCF
+[GLOBAL tss_flush]    ; Allows our C code to call tss_flush().
 
-gdt_end:
-
-[section .bss]
-
-resb 0x1000
-stack:
+tss_flush:
+    mov ax, 0x2B      ; Load the index of our TSS structure - The index is
+                      ; 0x28, as it is the 5th selector and each is 8 bytes
+                      ; long, but we set the bottom two bits (making 0x2B)
+                      ; so that it has an RPL of 3, not zero.
+    ltr ax            ; Load 0x2B into the task state register.
+    ret

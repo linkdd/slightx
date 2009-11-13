@@ -8,17 +8,17 @@ void printk (char *format, ...);
 #define cli()    asm ("cli")
 #define sti()    asm ("sti")
 
-static void reboot (void)
-{
-	cli ();
-	outb (0x64, 0xFE);
-	sti ();
-}
+#define reboot()        \
+do {                    \
+    cli ();             \
+    outb (0x64, 0xFE);  \
+    sti ();             \
+} while (/* CONSTCOND */ 0)
 
-static void halt (void)
-{
-	printk ("System halted.\n");
-	asm ("hlt");
-}
+#define halt()                      \
+do {                                \
+    printk ("System halted.\n");    \
+    asm ("hlt");                    \
+} while (/* CONSTCOND */ 0)
 
 #endif /* __ASM_H */

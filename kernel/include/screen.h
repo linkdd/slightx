@@ -1,9 +1,17 @@
 #ifndef __SCREEN_H
 #define __SCREEN_H
 
-#define RAMSCREEN    0xC00B8000
+/*!
+ * \file screen.h
+ * \brief Function to print on screen
+ * \author David Delassus
+ */
+
+#include <types.h>
+
+#define RAMSCREEN    0xB8000
 #define SIZESCREEN   0xFA0
-#define SCREENLIM    0xC00B8FA0
+#define SCREENLIM    0xB8FA0
 
 void clear (void);
 void scrollup (int n);

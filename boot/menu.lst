@@ -1,3 +1,4 @@
 title  SlightX
 root   (hd0,0)
 kernel /sys/kernel.bin color=0xF
+module /sys/initrd.img

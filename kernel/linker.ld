@@ -1,32 +1,28 @@
-OUTPUT_FORMAT("elf32-i386")
 ENTRY(start)
-
 SECTIONS
 {
-	. = 0x100000;
 
-	.setup :
-	{
-		*(.setup)
-	}
+    .text 0x100000 :
+    {
+        code = .; _code = .; __code = .;
+        *(.text)
+        . = ALIGN(4096);
+    }
 
-	. += 0xC0000000;
+    .data :
+    {
+        data = .; _data = .; __data = .;
+        *(.data)
+        *(.rodata)
+        . = ALIGN(4096);
+    }
 
-	.text : AT(ADDR(.text) - 0xC0000000)
-	{
-		*(.text)
-	}
+    .bss :
+    {
+        bss = .; _bss = .; __bss = .;
+        *(.bss)
+        . = ALIGN(4096);
+    }
 
-	.data ALIGN (4096) : AT(ADDR(.data) - 0xC0000000)
- 	{
-		*(.data)
-		*(.rodata*)
-	}
-
-	.bss ALIGN (4096) : AT(ADDR(.bss) - 0xC0000000)
-	{
-		*(COMMON*)
-		*(.bss*)
-	}
+    end = .; _end = .; __end = .;
 }
-

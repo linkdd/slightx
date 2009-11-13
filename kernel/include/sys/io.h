@@ -1,13 +1,21 @@
 #ifndef __IO_H
 #define __IO_H
 
-unsigned char inb (unsigned short port);
-unsigned short inw (unsigned short port);
-unsigned int ind (unsigned short port);
+/*!
+ * \file io.h
+ * \brief I/O functions
+ * \author David Delassus
+ */
 
-void outb (unsigned short port, unsigned char value);
-void outw (unsigned short port, unsigned short value);
-void outd (unsigned short port, unsigned int value);
+#include <types.h>
+
+uint8_t inb (uint16_t port);
+uint16_t inw (uint16_t port);
+uint32_t ind (uint16_t port);
+
+void outb (uint16_t port, uint8_t value);
+void outw (uint16_t port, uint16_t value);
+void outd (uint16_t port, uint32_t value);
 
 void iowait (void);
 

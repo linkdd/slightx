@@ -1,5 +1,7 @@
 bin/kernel.bin
 bin/libc.a
 bin/posix-test
+bin/make_initrd
+bin/initrd.img
 *.o
 *.swp

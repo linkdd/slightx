@@ -30,3 +30,7 @@ void my_function () {
 documentation for every students, users who want to understand the source code of SlightX
 
 - We respect the C89 conventions, please read it
+
+- Don't use typedef for struct, enum or union :
+OK     : struct type_t { ... };
+Not OK : typedef { ... } type_t;

@@ -7,3 +7,5 @@ This OS is conform to the POSIX conventions. SlightX is based on a microkernel a
 - doc/ : Documentation I used to write SlightX, and Doxygen documentation
 - apps/ : Applications for SlightX
 - bin/ : Every binary files
+
+SlightX is based on the James Molloy's tutorial : http://www.jamesmolloy.co.uk/tutorial_html/index.html

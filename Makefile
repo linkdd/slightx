@@ -29,5 +29,9 @@ install:
 	@umount mnt
 	@losetup -d /dev/loop0
 
+make_initrd: make_initrd.c
+	$(CC) $^ -o $@
+
+
 run:
 	@qemu -hda disk.img -m 512
