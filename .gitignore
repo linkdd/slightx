@@ -5,3 +5,4 @@ bin/make_initrd
 bin/initrd.img
 *.o
 *.swp
+doc/doxygen/*

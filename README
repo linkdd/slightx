@@ -9,3 +9,9 @@ This OS is conform to the POSIX conventions. SlightX is based on a microkernel a
 - bin/ : Every binary files
 
 SlightX is based on the James Molloy's tutorial : http://www.jamesmolloy.co.uk/tutorial_html/index.html
+
+To test SlightX :
+$ make all install run # It will compile, install on disk.img and run into QEMU
+Generate documentation :
+$ make doc # It will run doxygen
+$ $(my favorite web browser) doc/doxygen/html/index.html

@@ -1,4 +1,4 @@
-# Makefile for FreeX
+# Makefile for SlightX
 
 export CC = gcc
 export AS = nasm
@@ -8,7 +8,7 @@ export CFLAGS = -fno-builtin -m32 -Wall -nostartfiles -nostdlib -nostdinc -g -c
 export ASFLAGS = -f elf32
 export LDFLAGS = -melf_i386 -T linker.ld
 
-.PHONY: all clean install run
+.PHONY: all clean install run doc
 
 all:
 	@make all -C kernel
@@ -35,3 +35,6 @@ make_initrd: make_initrd.c
 
 run:
 	@qemu -hda disk.img -m 512
+
+doc:
+	@doxygen doc/Doxyfile
