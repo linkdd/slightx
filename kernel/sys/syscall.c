@@ -5,11 +5,18 @@
 static void syscall_handler (struct registers_t *regs);
 
 DEFN_SYSCALL1 (write, 0, const char *);
+DEFN_SYSCALL0 (dummy, 1);
+
+void dummy (void)
+{
+    return;
+}
 
 #define N_SYSCALLS  1
 static void *syscalls[N_SYSCALLS] =
 {
-    &printk
+    &printk,
+    &dummy
 };
 
 void init_syscalls (void)

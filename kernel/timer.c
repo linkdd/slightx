@@ -9,6 +9,7 @@ static void timer_callback (struct registers_t *regs)
 {
     tick++;
     switch_task ();
+    printk (".");
 }
 
 void init_timer (uint32_t frequency)

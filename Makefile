@@ -22,6 +22,7 @@ clean:
 	@make clean -C bin
 
 install:
+	@if [ ! -d mnt/ ] ; then mkdir mnt ; fi
 	@losetup -o 32256 /dev/loop0 disk.img
 	@mount -t xfs /dev/loop0 mnt
 	@make install -C boot
