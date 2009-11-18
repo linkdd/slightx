@@ -15,3 +15,5 @@ $ make all install run # It will compile, install on disk.img and run into QEMU
 Generate documentation :
 $ make doc # It will run doxygen
 $ $(my favorite web browser) doc/doxygen/html/index.html
+
+Thanks to Guillaume B. (Cheaterman) for the logo.
