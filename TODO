@@ -1,4 +1,4 @@
-{GLOBAL = 34%}
+{GLOBAL = 18%}
 
 [BOOTLOADER = 0%]
 
@@ -17,7 +17,7 @@ Reading configuration file = 0%
 Loading kernel = 0%
 Loading modules = 0%
 
-[KERNEL = 100%]
+[KERNEL = 72%]
 
 Booting with GRUB = 100%    # Later: Booting with SXLoader
 Enable paging = 100%
