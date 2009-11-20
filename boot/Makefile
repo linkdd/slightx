@@ -1,4 +1,5 @@
 .PHONY: install
 
 install:
-	@cp menu.lst ../mnt/grub/
+	@cp bootsplash.xpm.gz ../mnt/boot/
+	@cp menu.lst ../mnt/boot/

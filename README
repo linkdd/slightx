@@ -1,5 +1,8 @@
 SlightX is a free operating system developped in C and Assembly for x86 architectures.
 This OS is conform to the POSIX conventions. SlightX is based on a microkernel architecture.
+For the moment, SlightX is using the GRUB-0.97 bootloader, but later it will use its own
+bootloader : SXLoader
+
 
 - boot/ : This folder contains GRUB's config file menu.lst
 - kernel/ : Kernel's source

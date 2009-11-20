@@ -1,4 +1,6 @@
+splashimage (hd0,0)/grub/bootsplash.xpm.gz
+
 title  SlightX
 root   (hd0,0)
-kernel /sys/kernel.bin color=0xF
+kernel /sys/kernel.bin
 module /sys/initrd.img
