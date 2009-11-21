@@ -1,46 +1,46 @@
-{GLOBAL = 18%}
+{GLOBAL = 36%}
 
-[BOOTLOADER = 0%]
+	|1| [BOOTLOADER = 25%]
 
-(stage1 = 100%)
-Loading stage2 = 100%
+	|1| (stage1 = 100%)
+|1| Loading stage2 = 100%
 
-(stage2 = 0%)
-Relocate stage2 to 0x07C0 = 0%
-Enabling A20 line = 0%
-Detect memory map = 0%
-Detect available video modes = 0%
-Initialise protected mode = 0%
-Initialise GDT/IDT = 0%
-Detecting disks & partitions = 0%
-Reading configuration file = 0%
-Loading kernel = 0%
-Loading modules = 0%
+	|3| (stage2 = 0%)
+|1| Relocate stage2 to 0x07C0 = 0%
+|1| Enabling A20 line = 0%
+|2| Detect memory map = 0%
+|2| Detect available video modes = 0%
+|2| Initialise protected mode = 0%
+|2| Initialise GDT/IDT = 0%
+|2| Detecting disks & partitions = 0%
+|2| Reading configuration file = 0%
+|2| Loading kernel = 0%
+|2| Loading modules = 0%
 
-[KERNEL = 72%]
+	|3| [KERNEL = 76%]
 
-Booting with GRUB = 100%    # Later: Booting with SXLoader
-Enable paging = 100%
-Loading GDT = 100%
-Loading IDT = 100%
-IRQs & PIT = 100%
-Multitasking = 100%
-VFS = 100%
-initrd = 100%
-Syscalls = 0%
-Loading drivers = 0%
-Setting up a user environment = 0%
+|1| Booting with GRUB = 100%    # Later: Booting with SXLoader
+|3| Enable paging = 100%
+|2| Loading GDT = 100%
+|2| Loading IDT = 100%
+|2| IRQs & PIT = 100%
+|3| Multitasking = 100%
+|3| VFS = 100%
+|3| initrd = 100%
+|2| Syscalls = 0%
+|2| Loading drivers = 0%
+|1| Setting up a user environment = 0%
 
-[DRIVER = 0%]
+	|2| [DRIVER = 0%]
 
-Keyboard = 0%
-VESA = 0%
-FS: ext2 = 0%
-FS: FAT32 = 0%
-FS: XFS = 0%
-FS: SlightX FS = 0%
+|1| Keyboard = 0%
+|2| VESA = 0%
+|2| FS: ext2 = 0%
+|2| FS: FAT32 = 0%
+|3| FS: XFS = 0%
+|3| FS: SlightX FS = 0%
 
-[LIBC = 0%]
+	|1| [LIBC = 0%]
 
 stdio.c = 0%
 stdlib.c = 0%
@@ -52,3 +52,9 @@ unistd.c = 0%
 (Applications)
 
 posix-test (100%) : Test the POSIX compliance
+
+-----------------------------
+
+|1| : Level 1: The least important
+|2| : Level 2: Important
+|3| : Level 3: The most important

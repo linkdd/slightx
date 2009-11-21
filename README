@@ -20,3 +20,4 @@ $ make doc # It will run doxygen
 $ $(my favorite web browser) doc/doxygen/html/index.html
 
 Thanks to Guillaume B. (Cheaterman) for the logo.
+Thanks to Fabien V. (h4o) for the splashscreen.
