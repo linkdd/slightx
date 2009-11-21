@@ -1,43 +1,49 @@
-{GLOBAL = 36%}
+{GLOBAL = 10%}
 
-	|1| [BOOTLOADER = 25%]
+	|1| [BOOTLOADER = 0%]
 
-	|1| (stage1 = 100%)
-|1| Loading stage2 = 100%
+	|0| (stage1 = 100%)
+
+|1| Loading stage2                   = 100%
 
 	|3| (stage2 = 0%)
-|1| Relocate stage2 to 0x07C0 = 0%
-|1| Enabling A20 line = 0%
-|2| Detect memory map = 0%
-|2| Detect available video modes = 0%
-|2| Initialise protected mode = 0%
-|2| Initialise GDT/IDT = 0%
-|2| Detecting disks & partitions = 0%
-|2| Reading configuration file = 0%
-|2| Loading kernel = 0%
-|2| Loading modules = 0%
 
-	|3| [KERNEL = 76%]
+|1| Relocate stage2 to 0x07C0        = 0%
+|1| Enabling A20 line                = 0%
+|2| Detect memory map                = 0%
+|2| Detect available video modes     = 0%
+|2| Initialise protected mode        = 0%
+|2| Initialise GDT/IDT               = 0%
+|2| Detecting disks & partitions     = 0%
+|2| Reading configuration file       = 0%
+|2| Loading kernel                   = 0%
+|2| Loading modules                  = 0%
+|3| Init multiboot structure         = 0%
+|3| Store this structure into EBX    = 0%
 
-|1| Booting with GRUB = 100%    # Later: Booting with SXLoader
-|3| Enable paging = 100%
-|2| Loading GDT = 100%
-|2| Loading IDT = 100%
-|2| IRQs & PIT = 100%
-|3| Multitasking = 100%
-|3| VFS = 100%
-|3| initrd = 100%
-|2| Syscalls = 0%
-|2| Loading drivers = 0%
-|1| Setting up a user environment = 0%
+	|3| [KERNEL = 74%]
+
+|1| Booting with GRUB                = 100%    # Later: Booting with SXLoader
+|3| Enable paging                    = 100%
+|2| Loading GDT                      = 100%
+|2| Loading IDT                      = 100%
+|2| IRQs & PIT                       = 100%
+|3| Multitasking                     = 100%
+|3| VFS                              = 100%
+|3| initrd                           = 100%
+|2| Syscalls                         = 0%
+|1| Entering runlevel 2              = 0%
+|2| Loading drivers                  = 0%
+|1| Entering runlevel 3              = 100%
+|1| Setting up a user environment    = 0%
 
 	|2| [DRIVER = 0%]
 
-|1| Keyboard = 0%
-|2| VESA = 0%
-|2| FS: ext2 = 0%
-|2| FS: FAT32 = 0%
-|3| FS: XFS = 0%
+|1| Keyboard       = 0%
+|2| VESA           = 0%
+|2| FS: ext2       = 0%
+|2| FS: FAT32      = 0%
+|3| FS: XFS        = 0%
 |3| FS: SlightX FS = 0%
 
 	|1| [LIBC = 0%]
@@ -55,6 +61,7 @@ posix-test (100%) : Test the POSIX compliance
 
 -----------------------------
 
+|0| : Level 0: Negligible
 |1| : Level 1: The least important
 |2| : Level 2: Important
 |3| : Level 3: The most important
