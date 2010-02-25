@@ -1,5 +1,6 @@
 #define _POSIX_SOURCE
 #define _POSIX_C_SOURCE 199309
+#include <stdio.h>
 #include <unistd.h>
 
 long val;

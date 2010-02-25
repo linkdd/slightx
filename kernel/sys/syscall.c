@@ -12,7 +12,7 @@ void dummy (void)
     return;
 }
 
-#define N_SYSCALLS  1
+#define N_SYSCALLS  2
 static void *syscalls[N_SYSCALLS] =
 {
     &printk,
