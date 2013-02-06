@@ -88,8 +88,8 @@ int kmain (struct multiboot_t *mboot, uint magic, uint32_t initial_stack)
     printk ("Entering runlevel : 3\n");
     switch_to_user_mode ();
 
-    /* syscall_write ("SlightX: System loaded.\n"); 
-    syscall_dummy (); */
+    syscall_write ("SlightX: System loaded.\n"); 
+    syscall_dummy ();
 
     return 0;
 }

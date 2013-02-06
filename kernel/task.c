@@ -50,7 +50,7 @@ void move_stack (void *new_stack_start, uint32_t size)
          i -= 0x1000)
     {
         /* General-purpose stack is in user-mode */
-        alloc_frame (get_page (i, 1, current_directory), 0 /* user-mode */, i /* is writeable */);
+        alloc_frame (get_page (i, 1, current_directory), 0 /* user-mode */, 1 /* is writeable */);
     }
 
     /* Flush the TLB by reading and writing the page directory address again. */
