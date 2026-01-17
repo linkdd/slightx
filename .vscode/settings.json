@@ -1,0 +1,8 @@
+{
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/__build__/Debug",
+    "--background-index",
+    "--header-insertion=never"
+  ]
+}
