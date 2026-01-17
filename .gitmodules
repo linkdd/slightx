@@ -1,0 +1,3 @@
+[submodule "vendor/flanterm/upstream"]
+	path = vendor/flanterm/upstream
+	url = https://codeberg.org/Mintsuki/Flanterm
