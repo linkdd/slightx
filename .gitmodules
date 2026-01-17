@@ -1,3 +1,6 @@
 [submodule "vendor/flanterm/upstream"]
 	path = vendor/flanterm/upstream
 	url = https://codeberg.org/Mintsuki/Flanterm
+[submodule "vendor/limine/bin"]
+	path = vendor/limine/bin
+	url = https://codeberg.org/Limine/Limine
