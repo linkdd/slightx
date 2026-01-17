@@ -4,3 +4,6 @@
 [submodule "vendor/limine/bin"]
 	path = vendor/limine/bin
 	url = https://codeberg.org/Limine/Limine
+[submodule "vendor/limine/protocol"]
+	path = vendor/limine/protocol
+	url = https://codeberg.org/Limine/limine-protocol
