@@ -1,0 +1,2 @@
+add_subdirectory(limine)
+add_subdirectory(flanterm)
