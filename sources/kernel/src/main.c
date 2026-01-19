@@ -8,9 +8,13 @@
 
 #include <kernel/drivers/console.h>
 
+#include <kernel/mem/scratch.h>
+
 
 void kmain(void) {
   console_init();
+
+  scratch_init();
 
   LIMINE_GET_RESP(bootloader_info);
   assert_release(bootloader_info_response != NULL);
