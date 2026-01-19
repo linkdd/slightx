@@ -4,6 +4,18 @@
 #include <klibc/assert.h>
 
 
+str strview_from_cstr(const char *s) {
+  usize len = (usize)strlen(s);
+
+  return (str){
+    .data     = (char*)s,
+    .length   = len,
+    .capacity = len + 1,
+    .owned    = false,
+  };
+}
+
+
 str str_format(allocator a, const char *fmt, ...) {
   va_list ap;
 

@@ -72,3 +72,13 @@ int memcmp(const void *a, const void *b, size_t n) {
 
   return 0;
 }
+
+
+int strlen(const char *s) {
+  assert(s != NULL);
+
+  int count = 0;
+  while (*s++ != 0) count ++;
+
+  return count;
+}

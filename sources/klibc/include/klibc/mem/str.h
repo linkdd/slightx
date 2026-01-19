@@ -18,5 +18,7 @@ struct str {
 #define str_null()      (str){ .data = NULL,   .length = 0,             .capacity = 0,             .owned = false }
 
 
+str strview_from_cstr(const char *s);
+
 str str_format (allocator a, const char *fmt, ...);
 str str_vformat(allocator a, const char *fmt, va_list args);
