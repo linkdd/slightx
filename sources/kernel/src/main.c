@@ -16,6 +16,7 @@
 #include <kernel/boot/pic.h>
 
 #include <kernel/mem/pmm.h>
+#include <kernel/mem/vmm.h>
 
 
 static void init_static_globals(void) {
@@ -25,6 +26,7 @@ static void init_static_globals(void) {
   exc_init();
 
   pmm_init();
+  vmm_init();
 }
 
 
@@ -34,6 +36,7 @@ static void bootstrap(void) {
   pic_load();
 
   pmm_load();
+  vmm_load();
 
   asm("sti");
 }
