@@ -1,4 +1,5 @@
 #include <klibc/mem/arena.h>
+#include <klibc/mem/align.h>
 #include <klibc/mem/bytes.h>
 #include <klibc/assert.h>
 
@@ -16,11 +17,6 @@ void arena_reset(arena *a) {
   assert(a != NULL);
 
   a->offset = 0;
-}
-
-
-static inline usize align_size_up(usize size, usize alignment) {
-  return (size + alignment - 1) & ~(alignment - 1);
 }
 
 

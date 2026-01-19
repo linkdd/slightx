@@ -2,6 +2,7 @@
 #include <klibc/mem/bytes.h>
 #include <klibc/assert.h>
 
+
 span make_span(void *data, usize size) {
   assert(data != NULL && size > 0);
 

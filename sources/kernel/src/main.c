@@ -15,12 +15,16 @@
 #include <kernel/boot/irq.h>
 #include <kernel/boot/pic.h>
 
+#include <kernel/mem/pmm.h>
+
 
 static void init_static_globals(void) {
   gdt_init();
   isr_init();
   irq_init();
   exc_init();
+
+  pmm_init();
 }
 
 
@@ -28,6 +32,8 @@ static void bootstrap(void) {
   gdt_load();
   idt_load();
   pic_load();
+
+  pmm_load();
 
   asm("sti");
 }
