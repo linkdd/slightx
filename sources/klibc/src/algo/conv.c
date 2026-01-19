@@ -17,8 +17,6 @@ void itoa(str *out, u64 n, i32 base) {
     out->data[offset] = alphabet[35 + n % base];
   }
 
-  out->length--;
-
   for (usize offset = 0; offset < out->length / 2; ++offset) {
     usize swap_with = out->length - offset - 1;
 
