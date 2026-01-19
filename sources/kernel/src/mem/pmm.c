@@ -73,7 +73,7 @@ physical_address pmm_alloc(usize page_count) {
   }
 
   spinlock_release(&instance.lock);
-  return (physical_address) { .ptr = NULL };
+  panic("[pmm] No free pages available");
 }
 
 
