@@ -15,6 +15,7 @@
 #include <kernel/boot/irq.h>
 #include <kernel/boot/pic.h>
 #include <kernel/boot/tss.h>
+#include <kernel/boot/acpi.h>
 
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
@@ -63,6 +64,8 @@ static void bootstrap(void) {
 
   mp_load ();
   tss_load();
+
+  acpi_load();
 
   asm("sti");
 
