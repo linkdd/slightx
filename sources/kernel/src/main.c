@@ -17,6 +17,7 @@
 
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
+#include <kernel/mem/heap.h>
 
 
 static void init_static_globals(void) {
@@ -25,8 +26,9 @@ static void init_static_globals(void) {
   irq_init();
   exc_init();
 
-  pmm_init();
-  vmm_init();
+  pmm_init ();
+  vmm_init ();
+  heap_init();
 }
 
 
@@ -35,8 +37,9 @@ static void bootstrap(void) {
   idt_load();
   pic_load();
 
-  pmm_load();
-  vmm_load();
+  pmm_load ();
+  vmm_load ();
+  heap_load();
 
   asm("sti");
 }
@@ -62,6 +65,13 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
+
+  allocator a = heap_allocator();
+
+  u64 *i = allocate(a, sizeof(u64));
+  *i = 42;
+  klog("HEAP: %d\n", *i);
+  deallocate(a, i, sizeof(u64));
 
   halt();
 }

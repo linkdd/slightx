@@ -32,11 +32,13 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC ${KERNEL_INCLUDES}
   PRIVATE ${LIMINE_INCLUDES}
   PRIVATE ${FLANTERM_INCLUDES}
+  PRIVATE ${LIBALLOC_INCLUDES}
   PRIVATE ${KLIBC_INCLUDES}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
   vendor::limine
   vendor::flanterm
+  vendor::liballoc
   slightx::klibc
 )
 
