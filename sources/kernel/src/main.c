@@ -8,11 +8,15 @@
 
 #include <kernel/drivers/console.h>
 
+#include <kernel/boot/gdt.h>
+
 #include <kernel/mem/scratch.h>
 
 
 void kmain(void) {
   console_init();
+
+  gdt_init();
 
   scratch_init();
 
