@@ -14,10 +14,13 @@
 #include <kernel/boot/isr.h>
 #include <kernel/boot/irq.h>
 #include <kernel/boot/pic.h>
+#include <kernel/boot/tss.h>
 
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
 #include <kernel/mem/heap.h>
+
+#include <kernel/cpu/mp.h>
 
 
 static void init_static_globals(void) {
@@ -29,6 +32,23 @@ static void init_static_globals(void) {
   pmm_init ();
   vmm_init ();
   heap_init();
+
+  mp_init();
+}
+
+
+static void ap_start(void) {
+  gdt_load();
+  tss_load();
+  idt_load();
+  pic_load();
+
+  asm("sti");
+
+  syncpoint *sync = mp_get_syncpoint();
+  syncpoint_notify(sync);
+
+  halt();
 }
 
 
@@ -41,8 +61,19 @@ static void bootstrap(void) {
   vmm_load ();
   heap_load();
 
+  mp_load ();
+  tss_load();
+
   asm("sti");
+
+  syncpoint *sync = mp_get_syncpoint();
+  syncpoint_set(sync, mp_get_cpu_count() - 1);
+
+  mp_ap_jump(ap_start);
+
+  syncpoint_wait(sync);
 }
+
 
 void kmain(void) {
   console_init();
