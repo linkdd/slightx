@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdarg.h>
+#include <klibc/types.h>
 
 
 void klog (const char *fmt, ...);

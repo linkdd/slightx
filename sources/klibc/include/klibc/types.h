@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 #include <stdalign.h>
+#include <stdarg.h>
 
 
 typedef uint8_t   u8;
