@@ -1,7 +1,7 @@
 #pragma once
 
 
-extern void panic(const char *fmt, ...);
+[[noreturn]] extern void panic(const char *fmt, ...);
 
 
 #ifdef assert
