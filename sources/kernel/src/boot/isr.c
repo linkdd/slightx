@@ -1,6 +1,7 @@
 #include <kernel/boot/idt.h>
 #include <kernel/boot/int.h>
 #include <kernel/boot/irq.h>
+#include <kernel/boot/lapic.h>
 
 
 typedef void (*isr_handler_fn)(interrupt_frame*);
@@ -13,6 +14,9 @@ void isr_init(void) {
   for (usize i = 0; i < IDT_NUM_IRQS; i++) {
     isr_table[IDT_NUM_EXCEPTIONS + i] = irq_handler;
   }
+
+  isr_table[IDT_GATE_LAPIC_TIMER]    = lapic_timer_handler;
+  isr_table[IDT_GATE_LAPIC_SPURIOUS] = lapic_spurious_handler;
 }
 
 

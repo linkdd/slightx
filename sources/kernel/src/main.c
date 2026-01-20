@@ -17,6 +17,7 @@
 #include <kernel/boot/tss.h>
 #include <kernel/boot/acpi.h>
 #include <kernel/boot/madt.h>
+#include <kernel/boot/lapic.h>
 
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
@@ -45,6 +46,8 @@ static void ap_start(void) {
   idt_load();
   pic_load();
 
+  lapic_configure_timer();
+
   asm("sti");
 
   syncpoint *sync = mp_get_syncpoint();
@@ -68,6 +71,9 @@ static void bootstrap(void) {
 
   acpi_load     ();
   madt_mmio_load();
+
+  lapic_calibrate      ();
+  lapic_configure_timer();
 
   asm("sti");
 
