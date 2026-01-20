@@ -48,6 +48,10 @@ void mp_load(void) {
     cpu_data->is_bootstrap = cpu_info->lapic_id == mp_response->bsp_lapic_id;
 
     cpu_data->tss.ist1 = (u64)(&cpu_data->isr_stack[ISR_STACK_SIZE]);
+
+    if (cpu_data->is_bootstrap) {
+      percpu_set_segment((uptr)cpu_data);
+    }
   }
 }
 
