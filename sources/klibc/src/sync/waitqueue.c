@@ -2,10 +2,10 @@
 #include <klibc/assert.h>
 
 
-void waitqueue_entry_init(wq_entry *self, wq_handle handle) {
+void waitqueue_item_init(waitqueue_item *self, waiter w) {
   assert(self != NULL);
 
-  self->handle = handle;
+  self->waiter = w;
 
   self->siblings.prev = NULL;
   self->siblings.next = NULL;
@@ -21,7 +21,7 @@ void waitqueue_init(waitqueue *self) {
 }
 
 
-void waitqueue_add(waitqueue *self, wq_entry *entry) {
+void waitqueue_add(waitqueue *self, waitqueue_item *entry) {
   assert(self != NULL);
   assert(entry != NULL);
   assert(entry->siblings.prev == NULL);
@@ -48,7 +48,7 @@ void waitqueue_add(waitqueue *self, wq_entry *entry) {
 }
 
 
-void waitqueue_del(waitqueue *self, wq_entry *entry) {
+void waitqueue_del(waitqueue *self, waitqueue_item *entry) {
   assert(self != NULL);
   assert(entry != NULL);
 
@@ -89,7 +89,7 @@ void waitqueue_wake_one(waitqueue *self) {
 
   spinlock_acquire(&self->lock);
 
-  wq_entry *entry = self->head;
+  waitqueue_item *entry = self->head;
   if (entry != NULL) {
     self->head = entry->siblings.next;
 
@@ -103,11 +103,11 @@ void waitqueue_wake_one(waitqueue *self) {
     entry->siblings.prev = NULL;
     entry->siblings.next = NULL;
 
-    wq_handle handle = entry->handle;
+    waiter w = entry->waiter;
     spinlock_release(&self->lock);
 
-    if (handle.wake != NULL) {
-      handle.wake(handle.udata);
+    if (w.wake != NULL) {
+      w.wake(w.udata);
     }
   }
   else {
@@ -121,7 +121,7 @@ void waitqueue_wake_all(waitqueue *self) {
 
   spinlock_acquire(&self->lock);
 
-  wq_entry *entry = self->head;
+  waitqueue_item *entry = self->head;
 
   self->head = NULL;
   self->tail = NULL;
@@ -129,13 +129,13 @@ void waitqueue_wake_all(waitqueue *self) {
   spinlock_release(&self->lock);
 
   while (entry != NULL) {
-    wq_entry *next = entry->siblings.next;
+    waitqueue_item *next = entry->siblings.next;
 
     entry->siblings.prev = NULL;
     entry->siblings.next = NULL;
 
-    if (entry->handle.wake != NULL) {
-      entry->handle.wake(entry->handle.udata);
+    if (entry->waiter.wake != NULL) {
+      entry->waiter.wake(entry->waiter.udata);
     }
 
     entry = next;

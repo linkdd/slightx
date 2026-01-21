@@ -12,29 +12,22 @@ void semaphore_init(semaphore *self, isize initial_count) {
 }
 
 
-void semaphore_acquire(
-  semaphore *self,
-  wq_handle  handle,
-
-  void (*block)(void *), void *udata
-) {
+semaphore_status semaphore_acquire(semaphore *self, waitqueue_item *wait) {
   assert(self != NULL);
-  assert(block != NULL);
-
-  wq_entry entry;
-  waitqueue_entry_init(&entry, handle);
+  assert(wait != NULL);
 
   spinlock_acquire(&self->lock);
+
   self->count--;
 
-  if (self->count < 0) {
-    waitqueue_add(&self->wq, &entry);
+  if (self->count >= 0) {
     spinlock_release(&self->lock);
-
-    block(udata);
+    return SEM_ACQUIRED;
   }
   else {
+    waitqueue_add(&self->wq, wait);
     spinlock_release(&self->lock);
+    return SEM_SHOULD_WAIT;
   }
 }
 
@@ -70,15 +63,4 @@ void semaphore_release(semaphore *self) {
   else {
     spinlock_release(&self->lock);
   }
-}
-
-
-isize semaphore_get_count(semaphore *self) {
-  assert(self != NULL);
-
-  spinlock_acquire(&self->lock);
-  isize count = self->count;
-  spinlock_release(&self->lock);
-
-  return count;
 }
