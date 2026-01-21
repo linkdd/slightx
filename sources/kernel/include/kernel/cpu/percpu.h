@@ -4,6 +4,7 @@
 
 #include <kernel/mem/vmm.h>
 #include <kernel/boot/tss.h>
+#include <kernel/proc/scheduler.h>
 
 
 #define ISR_STACK_SIZE  0x4000  // 16 KB
@@ -19,8 +20,18 @@ struct percpu_data {
 
   cpu_fn current_fn;
 
-  tss tss;
+  struct {
+    u64 uptime_ns;
 
+    runqueue    tasks;
+    runqueue    cleanup;
+    sleeperlist sleepers;
+
+    task *current;
+    task *idle;
+  } scheduler;
+
+  tss            tss;
   alignas(16) u8 isr_stack[ISR_STACK_SIZE];
 };
 

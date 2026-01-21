@@ -25,6 +25,8 @@
 
 #include <kernel/cpu/mp.h>
 
+#include <kernel/proc/scheduler.h>
+
 
 static void init_static_globals(void) {
   gdt_init();
@@ -37,6 +39,8 @@ static void init_static_globals(void) {
   heap_init();
 
   mp_init();
+
+  scheduler_init();
 }
 
 
@@ -47,6 +51,8 @@ static void ap_start(void) {
   pic_load();
 
   lapic_configure_timer();
+
+  scheduler_load();
 
   asm("sti");
 
@@ -74,6 +80,8 @@ static void bootstrap(void) {
 
   lapic_calibrate      ();
   lapic_configure_timer();
+
+  scheduler_load();
 
   asm("sti");
 
@@ -107,13 +115,6 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
-
-  allocator a = heap_allocator();
-
-  u64 *i = allocate(a, sizeof(u64));
-  *i = 42;
-  klog("HEAP: %d\n", *i);
-  deallocate(a, i, sizeof(u64));
 
   halt();
 }

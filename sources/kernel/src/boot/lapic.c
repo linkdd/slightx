@@ -6,6 +6,7 @@
 
 #include <kernel/cpu/msr.h>
 #include <kernel/cpu/ioport.h>
+#include <kernel/cpu/mp.h>
 
 
 extern void lapic_timer_stub   (void);
@@ -96,7 +97,10 @@ void lapic_configure_timer(void) {
 void lapic_timer_handler(interrupt_frame *iframe) {
   (void)iframe;
 
-  // NS = 1'000'000 * CONFIG_TIMER_TICK_MS);
+  percpu_data *cpu = mp_get_percpu_data();
+  cpu->scheduler.uptime_ns += 1'000'000 * LAPIC_TIMER_TICK_MS;
+
+  sleeperlist_tick(&cpu->scheduler.sleepers);
 
   lapic_eoi();
 }
