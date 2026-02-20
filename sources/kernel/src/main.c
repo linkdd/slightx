@@ -26,6 +26,7 @@
 #include <kernel/cpu/mp.h>
 
 #include <kernel/proc/scheduler.h>
+#include <kernel/proc/thread.h>
 
 
 static void init_static_globals(void) {
@@ -61,7 +62,7 @@ static void ap_start(void) {
   syncpoint *sync = mp_get_syncpoint();
   syncpoint_notify(sync);
 
-  halt();
+  scheduler_idle_loop();
 }
 
 
@@ -96,6 +97,16 @@ static void bootstrap(void) {
 }
 
 
+static void dummy_task(void *arg) {
+  u8 c = (u8)(u64)arg;
+
+  while (true) {
+    klog("%c", (i32)c);
+    thread_sleep(1 * 1'000'000);
+  }
+}
+
+
 void kmain(void) {
   console_init();
 
@@ -118,5 +129,41 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->string)
   );
 
-  halt();
+  allocator a = heap_allocator();
+
+  task      *t1 = allocate(a, sizeof(task));
+  task_desc  d1 = {
+    .task_id     = scheduler_get_next_tid(),
+    .parent_task = NULL,
+    .kstack_size = 16 * 1024,
+    .ustack_size = 0,
+    .parent_pmap = NULL,
+    .entrypoint  = { .fn = dummy_task, .arg = (void*)(u64)('-') },
+    .pin         = { .enabled = false },
+    .flags       = TH_TASK_FLAG_KERNEL,
+  };
+  task_init(t1, &d1);
+  task_set_ready(t1);
+
+  percpu_data *cpu_data = mp_get_percpu_data();
+  runqueue_enqueue(&cpu_data->scheduler.tasks, t1);
+
+  task      *t2 = allocate(a, sizeof(task));
+  task_desc  d2 = {
+    .task_id     = scheduler_get_next_tid(),
+    .parent_task = NULL,
+    .kstack_size = 16 * 1024,
+    .ustack_size = 0,
+    .parent_pmap = NULL,
+    .entrypoint  = { .fn = dummy_task, .arg = (void*)(u64)('+') },
+    .pin         = { .enabled = false },
+    .flags       = TH_TASK_FLAG_KERNEL,
+  };
+  task_init(t2, &d2);
+  task_set_ready(t2);
+
+  runqueue_enqueue(&cpu_data->scheduler.tasks, t2);
+
+  scheduler_yield    ();
+  scheduler_idle_loop();
 }
