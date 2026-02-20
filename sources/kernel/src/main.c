@@ -102,7 +102,7 @@ static void dummy_task(void *arg) {
 
   while (true) {
     klog("%c", (i32)c);
-    thread_sleep(1 * 1'000'000);
+    thread_sleep(1'000'000'000);
   }
 }
 
