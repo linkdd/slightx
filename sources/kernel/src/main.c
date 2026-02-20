@@ -105,7 +105,7 @@ void kmain(void) {
   LIMINE_GET_RESP(bootloader_info);
   assert_release(bootloader_info_response != NULL);
   klog(
-    "bootloader: %s %s\n",
+    "bootloader: %s %s",
     strview_from_cstr(bootloader_info_response->name),
     strview_from_cstr(bootloader_info_response->version)
   );
@@ -113,7 +113,7 @@ void kmain(void) {
   LIMINE_GET_RESP(executable_file);
   assert_release(executable_file_response != NULL);
   klog(
-    "[slightx]# %s %s\n",
+    "[slightx]# %s %s",
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
