@@ -89,7 +89,6 @@ irq_stub_%+%1:
 %endmacro
 
 ; Swap GS bases if interrupted from user mode (CPL=3).
-; On entry: rsp points at [interrupt, err_code, rip, cs, ...], cs is at rsp+0x18
 %macro swapgs_if_usermode_entry 0
   test qword [rsp + 0x18], 3
   jz %%no_swapgs
@@ -97,7 +96,6 @@ irq_stub_%+%1:
 %%no_swapgs:
 %endmacro
 
-; On exit: rsp points at [rip, cs, rflags, rsp, ss], cs is at rsp+0x08
 %macro swapgs_if_usermode_exit 0
   test qword [rsp + 0x08], 3
   jz %%no_swapgs
