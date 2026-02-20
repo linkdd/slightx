@@ -58,9 +58,9 @@ physical_address pmm_alloc(usize page_count) {
       }
 
       if (page_offset == page_count - 1) {
-        spinlock_release(&instance.lock);
-
         pmm__mark_pages(&instance, page_base, page_count);
+
+        spinlock_release(&instance.lock);
 
         physical_address pa = { .addr = (uptr)(page_base * MM_PHYS_PAGE_SIZE) };
         virtual_address  va = hhdm_p2v(pa);
@@ -153,13 +153,9 @@ static void pmm__scan_bitmap(pmm *self) {
 
 
 static void pmm__mark_pages(pmm *self, u64 page, usize length) {
-  spinlock_acquire(&self->lock);
-
   for (usize offset = 0; offset < length; offset++) {
     bitmap_set(&self->allocated_pages, page + offset);
   }
-
-  spinlock_release(&self->lock);
 }
 
 
