@@ -74,6 +74,7 @@ void task_init(task *self, const task_desc *desc) {
   u64 *stack = (u64 *)stack_top;
   *(--stack) = (u64)desc->entrypoint.arg;
   *(--stack) = (u64)desc->entrypoint.fn;
+  *(--stack) = (u64)task_entrypoint_trampoline;
 
   self->context.rsp    = (u64)stack;
   self->context.rbp    = 0;

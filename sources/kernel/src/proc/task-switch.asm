@@ -34,5 +34,4 @@ task_context_switch:
   push rax
   popfq
 
-  mov rax, [rsi + 56]
-  jmp rax
+  ret
