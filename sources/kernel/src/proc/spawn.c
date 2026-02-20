@@ -47,15 +47,12 @@ u32 spawn_user_task(const_span binary) {
   allocator    a        = heap_allocator();
   percpu_data *cpu_data = mp_get_percpu_data();
 
-  usize code_pages = (binary.size + MM_VIRT_PAGE_SIZE - 1) / MM_VIRT_PAGE_SIZE;
+  usize             bin_page_count  = (binary.size + MM_VIRT_PAGE_SIZE - 1) / MM_VIRT_PAGE_SIZE;
+  physical_address *bin_page_paddrs = allocate(a, sizeof(physical_address) * bin_page_count);
 
-  // Allocate physical pages and copy the user binary
-  physical_address code_phys[16];
-  assert_release(code_pages <= 16);
-
-  for (usize i = 0; i < code_pages; i++) {
-    code_phys[i] = pmm_alloc(1);
-    virtual_address page_va = hhdm_p2v(code_phys[i]);
+  for (usize i = 0; i < bin_page_count; i++) {
+    bin_page_paddrs[i] = pmm_alloc(1);
+    virtual_address page_va = hhdm_p2v(bin_page_paddrs[i]);
 
     usize offset   = i * MM_VIRT_PAGE_SIZE;
     usize copy_len = binary.size - offset;
@@ -82,14 +79,16 @@ u32 spawn_user_task(const_span binary) {
 
   task_init(t, &desc);
 
-  for (usize i = 0; i < code_pages; i++) {
-    virtual_address uva = { .addr = USER_CODE_BASE + i * MM_VIRT_PAGE_SIZE };
+  for (usize i = 0; i < bin_page_count; i++) {
+    virtual_address bin_page_vaddr = { .addr = USER_CODE_BASE + i * MM_VIRT_PAGE_SIZE };
     vmm_map(
-      t->pmap, uva, code_phys[i],
+      t->pmap, bin_page_vaddr, bin_page_paddrs[i],
       MM_PT_FLAG_VALID | MM_PT_FLAG_USER,
       MM_PAGE_4KB
     );
   }
+
+  deallocate(a, bin_page_paddrs, sizeof(physical_address) * bin_page_count);
 
   task_set_ready(t);
   runqueue_enqueue(&cpu_data->scheduler.tasks, t);
