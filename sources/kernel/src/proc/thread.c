@@ -21,9 +21,11 @@ void thread_sleep(u64 ns) {
     scheduler_make_waiter(current_task)
   );
 
+  asm volatile("cli" ::: "memory");
   scheduler_wakeup_after(ns, &current_task->lifecycle.blocker);
   task_set_blocked      (current_task);
   scheduler_yield       ();
+  asm volatile("sti" ::: "memory");
 }
 
 
@@ -50,8 +52,10 @@ void thread_join(u32 tid) {
     &current_task->lifecycle.blocker
   );
 
+  asm volatile("cli" ::: "memory");
   task_set_blocked(current_task);
   scheduler_yield ();
+  asm volatile("sti" ::: "memory");
 }
 
 
@@ -62,6 +66,7 @@ void thread_join(u32 tid) {
   task_set_zombie   (current_task, exit_code);
   waitqueue_wake_all(&current_task->lifecycle.joiners);
 
+  asm volatile("cli" ::: "memory");
   scheduler_schedule_for_cleanup(current_task);
   scheduler_yield();
 
