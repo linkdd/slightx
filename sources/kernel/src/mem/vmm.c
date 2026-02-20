@@ -475,6 +475,18 @@ void vmm_make_page_map(page_map *pmap) {
   virtual_address  va = hhdm_p2v(pa);
 
   pmap->directory = va.ptr;
+
+  // Copy kernel upper-half entries so the kernel is mapped in every address space.
+  if (pmap->level == PML4) {
+    for (usize i = 256; i < 512; i++) {
+      pmap->directory[i] = kernel_page_map.directory[i];
+    }
+  }
+  else {
+    for (usize i = 256; i < 512; i++) {
+      pmap->directory[i] = kernel_page_map.directory[i];
+    }
+  }
 }
 
 
