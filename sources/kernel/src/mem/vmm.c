@@ -495,7 +495,18 @@ static void vmm_destroy_tables(page_table_entry *tbl, page_map_level level) {
   if (tbl == NULL)   return;
   if (level == PML1) return;
 
-  for (usize i = 0; i < 512; i++) {
+  // At the PML4 (or PML5) level, only iterate user-space entries (lower half,
+  // indices 0-255). Entries 256-511 are shared kernel mappings copied from the
+  // kernel page map and must never be freed. Note: Limine sets the USER flag on
+  // ALL intermediate page table entries (PT_TABLE_FLAGS includes USER), so the
+  // USER-flag check alone is insufficient to distinguish user-private vs.
+  // kernel-shared entries at this level.
+  usize entry_limit = 512;
+  if (level == PML4 || level == PML5) {
+    entry_limit = 256;
+  }
+
+  for (usize i = 0; i < entry_limit; i++) {
     page_table_entry pte = tbl[i];
 
     if (!pte_present(pte))         continue;
