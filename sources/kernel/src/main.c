@@ -3,6 +3,7 @@
 #include <klibc/assert.h>
 #include <klibc/types.h>
 #include <klibc/io/log.h>
+#include <klibc/mem/bytes.h>
 
 #include <kernel/halt.h>
 
@@ -27,6 +28,8 @@
 
 #include <kernel/proc/scheduler.h>
 #include <kernel/proc/thread.h>
+#include <kernel/proc/spawn.h>
+#include <kernel/proc/syscall.h>
 
 
 static void init_static_globals(void) {
@@ -44,6 +47,7 @@ static void init_static_globals(void) {
   mp_init();
 
   scheduler_init();
+  syscall_init();
 }
 
 
@@ -56,6 +60,7 @@ static void ap_start(void) {
   lapic_configure_timer();
 
   scheduler_load();
+  syscall_load();
 
   asm("sti");
 
@@ -85,6 +90,7 @@ static void bootstrap(void) {
   lapic_configure_timer();
 
   scheduler_load();
+  syscall_load();
 
   asm("sti");
 
@@ -129,40 +135,8 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->string)
   );
 
-  allocator a = heap_allocator();
-
-  task      *t1 = allocate(a, sizeof(task));
-  task_desc  d1 = {
-    .task_id     = scheduler_get_next_tid(),
-    .parent_task = NULL,
-    .kstack_size = 16 * 1024,
-    .ustack_size = 0,
-    .parent_pmap = NULL,
-    .entrypoint  = { .fn = dummy_task, .arg = (void*)(u64)('-') },
-    .pin         = { .enabled = false },
-    .flags       = TH_TASK_FLAG_KERNEL,
-  };
-  task_init(t1, &d1);
-  task_set_ready(t1);
-
-  percpu_data *cpu_data = mp_get_percpu_data();
-  runqueue_enqueue(&cpu_data->scheduler.tasks, t1);
-
-  task      *t2 = allocate(a, sizeof(task));
-  task_desc  d2 = {
-    .task_id     = scheduler_get_next_tid(),
-    .parent_task = NULL,
-    .kstack_size = 16 * 1024,
-    .ustack_size = 0,
-    .parent_pmap = NULL,
-    .entrypoint  = { .fn = dummy_task, .arg = (void*)(u64)('+') },
-    .pin         = { .enabled = false },
-    .flags       = TH_TASK_FLAG_KERNEL,
-  };
-  task_init(t2, &d2);
-  task_set_ready(t2);
-
-  runqueue_enqueue(&cpu_data->scheduler.tasks, t2);
+  spawn_kernel_task((task_entrypoint){ dummy_task, (void *)(u64)('-') });
+  spawn_kernel_task((task_entrypoint){ dummy_task, (void *)(u64)('+') });
 
   scheduler_yield    ();
   scheduler_idle_loop();

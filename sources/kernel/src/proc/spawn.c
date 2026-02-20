@@ -1,0 +1,98 @@
+#include <klibc/assert.h>
+#include <klibc/mem/bytes.h>
+
+#include <kernel/proc/spawn.h>
+#include <kernel/proc/scheduler.h>
+
+#include <kernel/mem/heap.h>
+#include <kernel/mem/pmm.h>
+#include <kernel/mem/vmm.h>
+#include <kernel/mem/hhdm.h>
+
+#include <kernel/cpu/mp.h>
+
+
+#define USER_CODE_BASE  0x400000ULL
+
+
+u32 spawn_kernel_task(task_entrypoint entrpoint) {
+  allocator    a        = heap_allocator();
+  percpu_data *cpu_data = mp_get_percpu_data();
+
+  task *t = allocate(a, sizeof(task));
+
+  task_desc desc = {
+    .task_id     = scheduler_get_next_tid(),
+    .parent_task = NULL,
+    .kstack_size = 16 * 1024,
+    .ustack_size = 0,
+    .parent_pmap = NULL,
+    .entrypoint  = entrpoint,
+    .pin         = { .enabled = false },
+    .flags       = TH_TASK_FLAG_KERNEL,
+  };
+
+  task_init       (t, &desc);
+  task_set_ready  (t);
+  runqueue_enqueue(&cpu_data->scheduler.tasks, t);
+
+  return desc.task_id;
+}
+
+
+u32 spawn_user_task(const_span binary) {
+  assert(binary.data != NULL);
+  assert(binary.size > 0);
+
+  allocator    a        = heap_allocator();
+  percpu_data *cpu_data = mp_get_percpu_data();
+
+  usize code_pages = (binary.size + MM_VIRT_PAGE_SIZE - 1) / MM_VIRT_PAGE_SIZE;
+
+  // Allocate physical pages and copy the user binary
+  physical_address code_phys[16];
+  assert_release(code_pages <= 16);
+
+  for (usize i = 0; i < code_pages; i++) {
+    code_phys[i] = pmm_alloc(1);
+    virtual_address page_va = hhdm_p2v(code_phys[i]);
+
+    usize offset   = i * MM_VIRT_PAGE_SIZE;
+    usize copy_len = binary.size - offset;
+    if (copy_len > MM_VIRT_PAGE_SIZE) copy_len = MM_VIRT_PAGE_SIZE;
+
+    memcpy(page_va.ptr, (const u8 *)binary.data + offset, copy_len);
+    if (copy_len < MM_VIRT_PAGE_SIZE) {
+      memset((u8 *)page_va.ptr + copy_len, 0, MM_VIRT_PAGE_SIZE - copy_len);
+    }
+  }
+
+  task *t = allocate(a, sizeof(task));
+
+  task_desc desc = {
+    .task_id     = scheduler_get_next_tid(),
+    .parent_task = NULL,
+    .kstack_size = 16 * 1024,
+    .ustack_size = 16 * 1024,
+    .parent_pmap = NULL,
+    .entrypoint  = { .fn = (void (*)(void *))USER_CODE_BASE, .arg = NULL },
+    .pin         = { .enabled = false },
+    .flags       = TH_TASK_FLAG_DETACHED,
+  };
+
+  task_init(t, &desc);
+
+  for (usize i = 0; i < code_pages; i++) {
+    virtual_address uva = { .addr = USER_CODE_BASE + i * MM_VIRT_PAGE_SIZE };
+    vmm_map(
+      t->pmap, uva, code_phys[i],
+      MM_PT_FLAG_VALID | MM_PT_FLAG_USER,
+      MM_PAGE_4KB
+    );
+  }
+
+  task_set_ready(t);
+  runqueue_enqueue(&cpu_data->scheduler.tasks, t);
+
+  return desc.task_id;
+}
