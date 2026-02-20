@@ -14,6 +14,9 @@ typedef void (*cpu_fn)(void);
 
 typedef struct percpu_data percpu_data;
 struct percpu_data {
+  u64 syscall_kernel_rsp;
+  u64 syscall_user_rsp;
+
   usize  processor_id;
   u32    lapic_id;
   bool   is_bootstrap;
