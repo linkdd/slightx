@@ -100,7 +100,8 @@ void lapic_timer_handler(interrupt_frame *iframe) {
   percpu_data *cpu = mp_get_percpu_data();
   cpu->scheduler.uptime_ns += 1'000'000 * LAPIC_TIMER_TICK_MS;
 
-  sleeperlist_tick(&cpu->scheduler.sleepers);
+  sleeperlist_tick (&cpu->scheduler.sleepers);
+  scheduler_cleanup();
 
   lapic_eoi();
 }

@@ -5,6 +5,7 @@
 #include <kernel/chrono/time.h>
 #include <kernel/mem/heap.h>
 #include <kernel/cpu/mp.h>
+#include <kernel/halt.h>
 
 
 static spinlock scheduler_lock = {};
@@ -224,6 +225,13 @@ void sleeperlist_tick(sleeperlist *self) {
 
 // MARK: - scheduler
 
+static void idle_task_fn(void *arg) {
+  (void)arg;
+
+  halt();
+}
+
+
 void scheduler_init(void) {
   spinlock_init(&scheduler_lock);
 }
@@ -245,13 +253,14 @@ void scheduler_load(void) {
 
   spinlock_acquire(&scheduler_lock);
   task_desc idle_task_desc = {
-    .task_id        = next_task_id++,
-    .parent_task    = NULL,
-    .kstack_size    = 16 * 1024,
-    .ustack_size    = 0,
-    .parent_pmap    = NULL,
-    .pin            = { .enabled = true, .processor_id = cpu_data->processor_id },
-    .flags          = TH_TASK_FLAG_KERNEL | TH_TASK_FLAG_DETACHED,
+    .task_id     = next_task_id++,
+    .parent_task = NULL,
+    .kstack_size = 16 * 1024,
+    .ustack_size = 0,
+    .parent_pmap = NULL,
+    .entrypoint  = { .fn = idle_task_fn, .arg = NULL },
+    .pin         = { .enabled = true, .processor_id = cpu_data->processor_id },
+    .flags       = TH_TASK_FLAG_KERNEL | TH_TASK_FLAG_DETACHED,
   };
   spinlock_release(&scheduler_lock);
 
@@ -260,6 +269,14 @@ void scheduler_load(void) {
 
   cpu_data->scheduler.idle    = idle_task;
   cpu_data->scheduler.current = idle_task;
+}
+
+
+u32 scheduler_get_next_tid(void) {
+  spinlock_acquire(&scheduler_lock);
+  u32 tid = next_task_id++;
+  spinlock_release(&scheduler_lock);
+  return tid;
 }
 
 
@@ -369,10 +386,12 @@ void scheduler_cleanup(void) {
 
 
 void scheduler_yield(void) {
+  asm volatile("cli" ::: "memory");
+
   percpu_data *cpu_data = mp_get_percpu_data();
   task        *old_task = cpu_data->scheduler.current;
 
-  if (old_task != NULL) {
+  if (old_task != NULL && old_task->state.type == TH_TASK_STATE_RUNNING) {
     task_set_ready(old_task);
     runqueue_enqueue(&cpu_data->scheduler.tasks, old_task);
   }
@@ -391,5 +410,13 @@ void scheduler_yield(void) {
 
   if (old_task != new_task) {
     task_context_switch(&old_task->context, &new_task->context);
+  }
+}
+
+
+[[noreturn]] void scheduler_idle_loop(void) {
+  while (true) {
+    asm volatile("sti; hlt; cli" ::: "memory");
+    scheduler_yield();
   }
 }
