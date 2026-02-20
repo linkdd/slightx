@@ -18,8 +18,8 @@ void task_init(task *self, const task_desc *desc) {
 
   allocator a = heap_allocator();
 
-  self->id = desc->task_id;
-  self->pin = desc->pin;
+  self->id    = desc->task_id;
+  self->pin   = desc->pin;
   self->flags = desc->flags;
 
   self->state = (task_state){
