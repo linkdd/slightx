@@ -3,10 +3,13 @@
 #include <flanterm_backends/fb.h>
 
 #include <klibc/mem/bytes.h>
+#include <klibc/sync/lock.h>
 
 #include <kernel/drivers/console.h>
 #include <kernel/halt.h>
 
+
+static spinlock console_lock = {};
 
 static struct flanterm_context *ft_ctx = NULL;
 
@@ -23,6 +26,7 @@ void console_init(void) {
     halt();
   }
 
+  spinlock_init(&console_lock);
 
   struct limine_framebuffer *fb = framebuffer_response->framebuffers[0];
 
@@ -67,7 +71,9 @@ void console_init(void) {
 
 
 void console_write(str s) {
+  spinlock_acquire(&console_lock);
   if (ft_ctx != NULL) {
     flanterm_write(ft_ctx, s.data, s.length);
   }
+  spinlock_release(&console_lock);
 }
