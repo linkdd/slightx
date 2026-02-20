@@ -3,9 +3,13 @@
 
 #include <kernel/proc/task.h>
 #include <kernel/mem/heap.h>
+#include <kernel/boot/gdt.h>
 
 
 extern void task_entrypoint_trampoline(void);
+extern void task_usermode_trampoline(void);
+
+#define USER_STACK_TOP   0x00007FFFFFFFE000ULL
 
 
 void task_init(task *self, const task_desc *desc) {
@@ -60,6 +64,26 @@ void task_init(task *self, const task_desc *desc) {
     vmm_make_page_map(self->pmap);
   }
 
+  // For user tasks, map the user stack into the task's address space
+  if ((desc->flags & TH_TASK_FLAG_KERNEL) == 0) {
+    usize ustack_pages = self->ustack.size / MM_VIRT_PAGE_SIZE;
+    uptr  ustack_vbase = USER_STACK_TOP - self->ustack.size;
+
+    page_map *kpmap = vmm_get_kernel_page_map();
+
+    for (usize i = 0; i < ustack_pages; i++) {
+      virtual_address  uva     = { .addr = ustack_vbase            + i * MM_VIRT_PAGE_SIZE };
+      virtual_address  heap_va = { .addr = (uptr)self->ustack.base + i * MM_VIRT_PAGE_SIZE };
+      physical_address upa     = vmm_translate(kpmap, heap_va);
+
+      vmm_map(
+        self->pmap, uva, upa,
+        MM_PT_FLAG_VALID | MM_PT_FLAG_WRITE | MM_PT_FLAG_USER | MM_PT_FLAG_NX,
+        MM_PAGE_4KB
+      );
+    }
+  }
+
   self->scheduling.last_processor_id = 0;
   self->scheduling.siblings.prev     = NULL;
   self->scheduling.siblings.next     = NULL;
@@ -72,9 +96,27 @@ void task_init(task *self, const task_desc *desc) {
   stack_top     &= ~0xFULL; // Align to 16 bytes
 
   u64 *stack = (u64 *)stack_top;
-  *(--stack) = (u64)desc->entrypoint.arg;
-  *(--stack) = (u64)desc->entrypoint.fn;
-  *(--stack) = (u64)task_entrypoint_trampoline;
+
+  if ((desc->flags & TH_TASK_FLAG_KERNEL) != 0) {
+    *(--stack) = (u64)desc->entrypoint.arg;
+    *(--stack) = (u64)desc->entrypoint.fn;
+    *(--stack) = (u64)task_entrypoint_trampoline;
+
+    self->context.rip = (u64)task_entrypoint_trampoline;
+  }
+  else {
+    u64 user_rsp = USER_STACK_TOP;
+    u64 user_cs  = GDT_SEGMENT(GDT_SEG_IDX_UCODE) | RING3;
+    u64 user_ss  = GDT_SEGMENT(GDT_SEG_IDX_UDATA) | RING3;
+
+    *(--stack) = user_ss;
+    *(--stack) = user_cs;
+    *(--stack) = user_rsp;
+    *(--stack) = (u64)desc->entrypoint.fn;
+    *(--stack) = (u64)task_usermode_trampoline;
+
+    self->context.rip = (u64)task_usermode_trampoline;
+  }
 
   self->context.rsp    = (u64)stack;
   self->context.rbp    = 0;
@@ -83,7 +125,6 @@ void task_init(task *self, const task_desc *desc) {
   self->context.r13    = 0;
   self->context.r14    = 0;
   self->context.r15    = 0;
-  self->context.rip    = (u64)task_entrypoint_trampoline;
   self->context.rflags = 0x202; // Enable interrupts
 }
 
