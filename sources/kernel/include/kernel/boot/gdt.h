@@ -21,8 +21,8 @@
 #define GDT_SEGMENT(idx)  ((idx) << 3)
 #define GDT_SEG_IDX_KCODE  5
 #define GDT_SEG_IDX_KDATA  6
-#define GDT_SEG_IDX_UCODE  7
-#define GDT_SEG_IDX_UDATA  8
+#define GDT_SEG_IDX_UDATA  7
+#define GDT_SEG_IDX_UCODE  8
 #define GDT_SEG_IDX_TSS    9
 
 // Privilege levels

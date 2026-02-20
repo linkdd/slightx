@@ -67,22 +67,22 @@ static gdt_gate gdt_descriptors[] = {
     .flags      = LONG_MODE,
     .base_high  = 0
   },
-  // User Code Segment
-  {
-    .limit_low  = 0,
-    .base_low   = 0,
-    .base_mid   = 0,
-    .access     = PRESENT | DPL(3) | NOT_SYS | EXEC | RW,
-    .limit_high = 0,
-    .flags      = LONG_MODE | GRANULARITY_4K,
-    .base_high  = 0
-  },
   // User Data Segment
   {
     .limit_low  = 0,
     .base_low   = 0,
     .base_mid   = 0,
     .access     = PRESENT | DPL(3) | NOT_SYS | RW,
+    .limit_high = 0,
+    .flags      = LONG_MODE | GRANULARITY_4K,
+    .base_high  = 0
+  },
+  // User Code Segment
+  {
+    .limit_low  = 0,
+    .base_low   = 0,
+    .base_mid   = 0,
+    .access     = PRESENT | DPL(3) | NOT_SYS | EXEC | RW,
     .limit_high = 0,
     .flags      = LONG_MODE | GRANULARITY_4K,
     .base_high  = 0
