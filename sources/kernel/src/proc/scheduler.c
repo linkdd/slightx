@@ -4,6 +4,7 @@
 #include <kernel/proc/scheduler.h>
 #include <kernel/chrono/time.h>
 #include <kernel/mem/heap.h>
+#include <kernel/mem/vmm.h>
 #include <kernel/cpu/mp.h>
 #include <kernel/halt.h>
 
@@ -409,6 +410,12 @@ void scheduler_yield(void) {
   }
 
   if (old_task != new_task) {
+    vmm_switch_page_map(new_task->pmap);
+
+    u64 kstack_top               = (u64)new_task->kstack.base + new_task->kstack.size;
+    cpu_data->tss.rsp0           = kstack_top;
+    cpu_data->syscall_kernel_rsp = kstack_top;
+
     task_context_switch(&old_task->context, &new_task->context);
   }
 }
