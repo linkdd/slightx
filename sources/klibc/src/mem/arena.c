@@ -34,6 +34,25 @@ static void *arena_allocate(void *udata, usize sz) {
 }
 
 
+static void *arena_allocate_aligned(void *udata, usize sz, usize align) {
+  arena *a = (arena *)udata;
+  assert(a != NULL);
+  assert(is_alignment_valid(align));
+
+  usize current_addr = (uptr)a->memory.data + a->offset;
+  usize aligned_addr = align_ptr_up(current_addr, align);
+  usize padding      = aligned_addr - current_addr;
+
+  if (a->memory.size - a->offset < sz + padding) {
+    return NULL;
+  }
+
+  a->offset += padding + sz;
+
+  return (void *)aligned_addr;
+}
+
+
 static void *arena_reallocate(void *udata, void *ptr, usize oldsz, usize newsz) {
   if (newsz == 0) {
     return NULL;
@@ -60,9 +79,10 @@ static void arena_deallocate(void *udata, void *ptr, usize sz) {
 
 allocator arena_allocator(arena *a) {
   return (allocator){
-    .allocate   = arena_allocate,
-    .reallocate = arena_reallocate,
-    .deallocate = arena_deallocate,
-    .udata      = a,
+    .allocate         = arena_allocate,
+    .allocate_aligned = arena_allocate_aligned,
+    .reallocate       = arena_reallocate,
+    .deallocate       = arena_deallocate,
+    .udata            = a,
   };
 }

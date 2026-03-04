@@ -189,11 +189,11 @@ static void *heap_allocate_aligned(void *udata, usize sz, usize align) {
   uptr  ptr = align_ptr_up(raw, align);
   usize off = ptr - raw;
 
-  heap_block_hdr* hdr = (heap_block_hdr*)(ptr - sizeof(heap_block_hdr));
-  hdr->base             = base;
-  hdr->size             = totalsz;
-  hdr->align            = align;
-  hdr->offset           = off;
+  heap_block_hdr *hdr = (heap_block_hdr*)(ptr - sizeof(heap_block_hdr));
+  hdr->base           = base;
+  hdr->size           = totalsz;
+  hdr->align          = align;
+  hdr->offset         = off;
 
   return (void*)ptr;
 }
