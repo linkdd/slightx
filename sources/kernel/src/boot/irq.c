@@ -29,7 +29,7 @@ void irq_handler(interrupt_frame *iframe) {
   pic_eoi(irq);
 
   if (cf == INTERRUPT_CONTROLFLOW_HALT) {
-    asm("cli");
+    __asm__("cli");
     halt();
   }
 }

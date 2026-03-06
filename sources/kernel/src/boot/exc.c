@@ -91,7 +91,7 @@ void exc_handler(interrupt_frame *iframe) {
   }
 
   if (cf == INTERRUPT_CONTROLFLOW_HALT) {
-    asm("cli");
+    __asm__("cli");
     halt();
   }
 }

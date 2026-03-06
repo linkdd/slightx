@@ -387,7 +387,7 @@ void scheduler_cleanup(void) {
 
 
 void scheduler_yield(void) {
-  asm volatile("cli" ::: "memory");
+  __asm__ volatile("cli" ::: "memory");
 
   percpu_data *cpu_data = mp_get_percpu_data();
   task        *old_task = cpu_data->scheduler.current;
@@ -423,7 +423,7 @@ void scheduler_yield(void) {
 
 [[noreturn]] void scheduler_idle_loop(void) {
   while (true) {
-    asm volatile("sti; hlt; cli" ::: "memory");
+    __asm__ volatile("sti; hlt; cli" ::: "memory");
     scheduler_yield();
   }
 }

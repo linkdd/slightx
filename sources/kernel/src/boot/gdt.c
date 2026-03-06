@@ -113,7 +113,7 @@ void gdt_init(void) {
 
 
 void gdt_load(void) {
-  asm volatile ("lgdt %0" : : "m"(gdt_pointer) : "memory");
+  __asm__ volatile("lgdt %0" : : "m"(gdt_pointer) : "memory");
   // No need to reload segments, the first 6 entries are the same
   // as the GDT setup by Limine, we merely added user segments.
 }

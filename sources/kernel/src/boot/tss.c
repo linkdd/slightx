@@ -46,5 +46,5 @@ void tss_load(void) {
   gdt_set_gate(GDT_SEG_IDX_TSS + 0, &tss_descriptor.entries[0]);
   gdt_set_gate(GDT_SEG_IDX_TSS + 1, &tss_descriptor.entries[1]);
 
-  asm volatile ("ltr %0" : : "r"(tss_segment) : "memory");
+  __asm__ volatile("ltr %0" : : "r"(tss_segment) : "memory");
 }

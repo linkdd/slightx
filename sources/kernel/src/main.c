@@ -65,7 +65,7 @@ static void ap_start(void) {
   scheduler_load();
   syscall_load();
 
-  asm("sti");
+  __asm__("sti");
 
   syncpoint *sync = mp_get_syncpoint();
   syncpoint_notify(sync);
@@ -95,7 +95,7 @@ static void bootstrap(void) {
   scheduler_load();
   syscall_load();
 
-  asm("sti");
+  __asm__("sti");
 
   syncpoint *sync = mp_get_syncpoint();
   syncpoint_set(sync, mp_get_cpu_count() - 1);

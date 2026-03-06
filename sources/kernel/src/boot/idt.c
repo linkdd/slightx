@@ -31,7 +31,7 @@ void idt_load(void) {
     idt_set_gate(idx + IDT_NUM_EXCEPTIONS, irq_stub_table[idx], 0x8E, 0x0);
   }
 
-  asm volatile ("lidt %0" :: "m"(idt_desc));
+  __asm__ volatile("lidt %0" :: "m"(idt_desc));
 }
 
 

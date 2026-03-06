@@ -198,7 +198,7 @@ void vmm_load(void) {
   exc_set_callback(EXC_PAGE_FAULT, pagefault_handler);
 
   uptr cr3;
-  asm volatile("mov %%cr3, %0" : "=r"(cr3) :: "memory");
+  __asm__ volatile("mov %%cr3, %0" : "=r"(cr3) :: "memory");
 
   physical_address pmd_paddr = { .addr = cr3 };
   virtual_address  pmd_vaddr = hhdm_p2v(pmd_paddr);
@@ -373,13 +373,13 @@ void vmm_switch_page_map(page_map *pmap) {
   virtual_address  va = { .ptr = pmap->directory };
   physical_address pa = hhdm_v2p(va);
 
-  asm volatile("mov %0, %%cr3" : : "r"(pa.ptr));
+  __asm__ volatile("mov %0, %%cr3" : : "r"(pa.ptr));
 }
 
 
 // MARK: invalidate
 void vmm_invalidate_page(virtual_address va) {
-  asm volatile(
+  __asm__ volatile(
     "invlpg (%0)"
     : : "b"(va.addr)
     : "memory"
