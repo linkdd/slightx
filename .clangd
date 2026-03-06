@@ -7,3 +7,9 @@ InlayHints:
   DeducedTypes: false
   DefaultArguments: false
   TypeNameLimit: 24
+
+---
+If:
+  PathMatch: ".*\\.(c|h)$"
+CompileFlags:
+  Add: [-std=c23]
