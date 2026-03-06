@@ -13,6 +13,8 @@ struct vfs_node_path {
   str          path;
 };
 
+RESULT_DECL(vfs_node_path, vfs_err);
+
 
 str vfs_normalize_path(str path, char buf[VFS_PATH_MAX]);
 
