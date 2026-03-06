@@ -31,7 +31,7 @@
 #include <kernel/proc/spawn.h>
 #include <kernel/proc/syscall.h>
 
-#include <kernel/fs/vfs.h>
+#include <kernel/vfs/main.h>
 
 
 static void init_static_globals(void) {
