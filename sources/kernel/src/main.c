@@ -103,16 +103,6 @@ static void bootstrap(void) {
 }
 
 
-static void dummy_task(void *arg) {
-  u8 c = (u8)(u64)arg;
-
-  while (true) {
-    klog("%c", (i32)c);
-    thread_sleep(1'000'000'000);
-  }
-}
-
-
 void kmain(void) {
   console_init();
 
@@ -134,9 +124,6 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
-
-  spawn_kernel_task((task_entrypoint){ dummy_task, (void *)(u64)('-') });
-  spawn_kernel_task((task_entrypoint){ dummy_task, (void *)(u64)('+') });
 
   scheduler_yield    ();
   scheduler_idle_loop();
