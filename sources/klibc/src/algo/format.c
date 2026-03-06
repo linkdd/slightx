@@ -77,6 +77,7 @@ void formatter_apply_v(formatter *self, const char *fmt, va_list args) {
 
         case 'p':
           self->consume(self->udata, str_literal("*"));
+          [[fallthrough]];
         case 'x':
         case 'X':
           uival = va_arg(args, u64);
