@@ -9,6 +9,7 @@ include("build/cmake/vars.cmake")
 add_subdirectory(vendor)
 add_subdirectory(sources/klibc)
 add_subdirectory(sources/kernel)
+add_subdirectory(sources/apps)
 add_subdirectory(config)
 
 install(CODE "
