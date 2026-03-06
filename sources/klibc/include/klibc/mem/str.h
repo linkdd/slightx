@@ -22,3 +22,13 @@ str strview_from_cstr(const char *s);
 
 str str_format (allocator a, const char *fmt, ...);
 str str_vformat(allocator a, const char *fmt, va_list args);
+
+str  str_clone(allocator a, str s);
+void str_free (allocator a, str *s);
+
+str str_slice(str s, usize start, usize length);
+
+bool str_equal     (str a, str b);
+bool str_startswith(str s, str prefix);
+
+OPTION(usize) str_rfind(str s, char c);

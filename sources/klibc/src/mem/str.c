@@ -71,3 +71,61 @@ str str_vformat(allocator a, const char *fmt, va_list args) {
 
   return s;
 }
+
+
+str str_clone(allocator a, str s) {
+  str copy = {
+    .data     = allocate_v(a, s.length, sizeof(char)),
+    .length   = s.length,
+    .capacity = s.length * sizeof(char),
+    .owned    = true,
+  };
+  memcpy(copy.data, s.data, s.length);
+
+  return copy;
+}
+
+
+void str_free(allocator a, str *s) {
+  assert(s != NULL);
+  assert(s->owned);
+
+  deallocate(a, s->data, s->capacity * sizeof(char));
+  *s = str_null();
+}
+
+
+str str_slice(str s, usize start, usize length) {
+  assert(start <= s.length);
+  assert(start + length <= s.length);
+
+  return (str){
+    .data     = s.data + start,
+    .length   = length,
+    .capacity = length,
+    .owned    = false,
+  };
+}
+
+
+bool str_equal(str a, str b) {
+  if (a.length != b.length) return false;
+  return memcmp(a.data, b.data, a.length) == 0;
+}
+
+
+bool str_startswith(str s, str prefix) {
+  if (prefix.length > s.length) return false;
+  return memcmp(s.data, prefix.data, prefix.length) == 0;
+}
+
+
+OPTION(usize) str_rfind(str s, char c) {
+  for (usize i = s.length; i > 0; i--) {
+    if (s.data[i - 1] == c) {
+      return (OPTION(usize)) SOME(i - 1);
+    }
+  }
+
+  return (OPTION(usize)) NONE();
+}
