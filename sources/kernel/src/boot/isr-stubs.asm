@@ -10,6 +10,7 @@ global exc_stub_table
 global irq_stub_table
 
 global lapic_timer_stub
+global lapic_panic_stub
 global lapic_spurious_stub
 
 %macro pushagrd 0
@@ -191,6 +192,11 @@ common_stub isr_common_stub, isr_handler
 lapic_timer_stub:
   push qword 0
   push qword 0xE0
+  jmp isr_common_stub
+
+lapic_panic_stub:
+  push qword 0
+  push qword 0xFE
   jmp isr_common_stub
 
 lapic_spurious_stub:
