@@ -5,7 +5,7 @@
 #include "../path.h"
 
 
-RESULT(vfs_file_ref, vfs_err) vfs_op_open(str path, u32 flags) {
+RESULT(vfs_file_ref, vfs_err) vfs_open(str path, u32 flags) {
   char pathbuf[VFS_PATH_MAX] = {};
   str  normpath              = vfs_normalize_path(path, pathbuf);
   if (normpath.data == NULL) {
