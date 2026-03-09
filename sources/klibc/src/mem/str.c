@@ -16,6 +16,19 @@ str strview_from_cstr(const char *s) {
 }
 
 
+str strview_from_buffer(const u8 *buf, size_t bufsz) {
+  assert(buf != NULL);
+  assert(bufsz > 0);
+
+  return (str){
+    .data     = (char *)buf,
+    .length   = strnlen((const char *)buf, bufsz),
+    .capacity = bufsz,
+    .owned    = false,
+  };
+}
+
+
 str str_format(allocator a, const char *fmt, ...) {
   va_list ap;
 
