@@ -72,7 +72,7 @@ str str_vformat(allocator a, const char *fmt, va_list args) {
 
   str s = {
     .data     = allocate_v(a, len, sizeof(char)),
-    .length   = len,
+    .length   = 0,
     .capacity = len * sizeof(char),
     .owned    = true,
   };
