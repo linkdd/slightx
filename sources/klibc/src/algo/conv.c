@@ -11,6 +11,12 @@ void itoa(str *out, u64 n, i32 base) {
     return;
   }
 
+  if (n == 0) {
+    assert_release(out->capacity > 0);
+    out->data[0] = '0';
+    out->length  = 1;
+  }
+
   for (usize offset = 0; n > 0; n /= base, ++offset, ++out->length) {
     assert_release(offset < out->capacity);
 
