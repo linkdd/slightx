@@ -18,4 +18,4 @@ RESULT_DECL(vfs_node_path, vfs_err);
 
 str vfs_normalize_path(str path, char buf[VFS_PATH_MAX]);
 
-RESULT(vfs_node_path, vfs_err) vfs_lookup_parent(str normpath);
+RESULT(vfs_node_path, vfs_err) vfs_lookup_parent(str normpath, bool nofollow);

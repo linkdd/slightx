@@ -12,7 +12,7 @@ RESULT(UNIT, vfs_err) vfs_chmod(str path, vfs_mode mode) {
     return (RESULT(UNIT, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto node = vfs_lookup(normpath);
+  auto node = vfs_lookup(normpath, false);
   if (!node.is_ok) {
     return (RESULT(UNIT, vfs_err)) ERR(node.err);
   }

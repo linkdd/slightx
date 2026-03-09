@@ -34,7 +34,7 @@ struct vfs_node_ops {
 };
 
 
-RESULT(vfs_node_ref,  vfs_err) vfs_lookup  (str path);
+RESULT(vfs_node_ref,  vfs_err) vfs_lookup  (str path, bool nofollow);
 RESULT(vfs_node_ref,  vfs_err) vfs_create  (str path, vfs_node_type type, vfs_perms perms);
 RESULT(UNIT,          vfs_err) vfs_link    (str path, vfs_node_ref target);
 RESULT(UNIT,          vfs_err) vfs_unlink  (str path);

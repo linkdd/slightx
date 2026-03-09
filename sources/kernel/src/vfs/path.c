@@ -79,7 +79,7 @@ str vfs_normalize_path(str path, char buf[VFS_PATH_MAX]) {
 }
 
 
-RESULT(vfs_node_path, vfs_err) vfs_lookup_parent(str normpath) {
+RESULT(vfs_node_path, vfs_err) vfs_lookup_parent(str normpath, bool nofollow) {
   assert(normpath.length > 0);
   assert(normpath.data[0] == '/');
 
@@ -97,7 +97,7 @@ RESULT(vfs_node_path, vfs_err) vfs_lookup_parent(str normpath) {
   str dirname  = str_slice(normpath, 0, dirlen);
   str basename = str_slice(normpath, last_slash.some + 1, normpath.length - last_slash.some - 1);
 
-  auto node = vfs_lookup(dirname);
+  auto node = vfs_lookup(dirname, nofollow);
   if (!node.is_ok) {
     return (RESULT(vfs_node_path, vfs_err)) ERR(node.err);
   }

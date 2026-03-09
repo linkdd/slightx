@@ -12,7 +12,7 @@ RESULT(UNIT, vfs_err) vfs_link(str path, vfs_node_ref target) {
     return (RESULT(UNIT, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto nodepath = vfs_lookup_parent(normpath);
+  auto nodepath = vfs_lookup_parent(normpath, false);
   if (!nodepath.is_ok) {
     return (RESULT(UNIT, vfs_err)) ERR(nodepath.err);
   }

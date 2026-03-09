@@ -18,12 +18,12 @@ RESULT(UNIT, vfs_err) vfs_rename(str oldpath, str newpath) {
     return (RESULT(UNIT, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto old_nodepath = vfs_lookup_parent(old_normpath);
+  auto old_nodepath = vfs_lookup_parent(old_normpath, false);
   if (!old_nodepath.is_ok) {
     return (RESULT(UNIT, vfs_err)) ERR(old_nodepath.err);
   }
 
-  auto new_nodepath = vfs_lookup_parent(new_normpath);
+  auto new_nodepath = vfs_lookup_parent(new_normpath, false);
   if (!new_nodepath.is_ok) {
     vfs_node_decref(old_nodepath.ok.node);
     return (RESULT(UNIT, vfs_err)) ERR(new_nodepath.err);

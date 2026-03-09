@@ -12,7 +12,7 @@ RESULT(vfs_node_ref, vfs_err) vfs_symlink(str path, str target) {
     return (RESULT(vfs_node_ref, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto nodepath = vfs_lookup_parent(normpath);
+  auto nodepath = vfs_lookup_parent(normpath, false);
   if (!nodepath.is_ok) {
     return (RESULT(vfs_node_ref, vfs_err)) ERR(nodepath.err);
   }

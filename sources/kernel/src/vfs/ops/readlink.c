@@ -12,7 +12,7 @@ RESULT(str, vfs_err) vfs_readlink(str path, allocator a) {
     return (RESULT(str, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto node = vfs_lookup(normpath);
+  auto node = vfs_lookup(normpath, true);
   if (!node.is_ok) {
     return (RESULT(str, vfs_err)) ERR(node.err);
   }

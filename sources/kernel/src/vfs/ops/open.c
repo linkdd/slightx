@@ -12,11 +12,12 @@ RESULT(vfs_file_ref, vfs_err) vfs_open(str path, u32 flags) {
     return (RESULT(vfs_file_ref, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  bool created = false;
-  auto node    = vfs_lookup(normpath);
+  bool created  = false;
+  bool nofollow = (flags & VFS_O_NOFOLLOW) != 0;
+  auto node     = vfs_lookup(normpath, nofollow);
 
   if (!node.is_ok && node.err == VFS_ENOTFOUND && (flags & VFS_O_CREATE)) {
-    auto nodepath = vfs_lookup_parent(normpath);
+    auto nodepath = vfs_lookup_parent(normpath, nofollow);
     if (!nodepath.is_ok) {
       return (RESULT(vfs_file_ref, vfs_err)) ERR(nodepath.err);
     }
@@ -63,6 +64,15 @@ RESULT(vfs_file_ref, vfs_err) vfs_open(str path, u32 flags) {
   }
 
   vfs_node_ref self = node.ok;
+
+  if (self->type == VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) != 0) {
+    vfs_node_decref(self);
+    return (RESULT(vfs_file_ref, vfs_err)) ERR(VFS_ENOTDIR);
+  }
+  else if (self->type != VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) == 0) {
+    vfs_node_decref(self);
+    return (RESULT(vfs_file_ref, vfs_err)) ERR(VFS_EISDIR);
+  }
 
   if (self->ops == NULL || self->ops->open == NULL) {
     vfs_node_decref(self);

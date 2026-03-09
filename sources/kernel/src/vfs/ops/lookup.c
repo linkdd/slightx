@@ -7,7 +7,7 @@
 #include "../path.h"
 
 
-RESULT(vfs_node_ref, vfs_err) vfs_lookup(str path) {
+RESULT(vfs_node_ref, vfs_err) vfs_lookup(str path, bool nofollow) {
   char pathbuf[VFS_PATH_MAX] = {};
   str  normpath              = vfs_normalize_path(path, pathbuf);
   if (normpath.data == NULL) {
@@ -89,7 +89,7 @@ symlink_followed:
     if (!res.is_ok) return res;
     node = res.ok;
 
-    if (node->type == VFS_NODETYPE_SYMLINK) {
+    if (node->type == VFS_NODETYPE_SYMLINK && !nofollow) {
       if (++symlink_depth > VFS_SYMLINK_DEPTH_MAX) {
         vfs_node_decref(node);
         return (RESULT(vfs_node_ref, vfs_err)) ERR(VFS_ELOOP);

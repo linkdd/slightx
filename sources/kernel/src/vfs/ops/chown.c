@@ -12,7 +12,7 @@ RESULT(UNIT, vfs_err) vfs_chown(str path, u32 uid, u32 gid) {
     return (RESULT(UNIT, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto node = vfs_lookup(normpath);
+  auto node = vfs_lookup(normpath, false);
   if (!node.is_ok) {
     return (RESULT(UNIT, vfs_err)) ERR(node.err);
   }

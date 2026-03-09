@@ -12,7 +12,7 @@ RESULT(vfs_stat_desc, vfs_err) vfs_stat(str path) {
     return (RESULT(vfs_stat_desc, vfs_err)) ERR(VFS_EINVAL);
   }
 
-  auto node = vfs_lookup(normpath);
+  auto node = vfs_lookup(normpath, false);
   if (!node.is_ok) {
     return (RESULT(vfs_stat_desc, vfs_err)) ERR(node.err);
   }
