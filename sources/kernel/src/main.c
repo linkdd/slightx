@@ -8,6 +8,7 @@
 #include <kernel/halt.h>
 
 #include <kernel/drivers/console.h>
+#include <kernel/drivers/initrd.h>
 
 #include <kernel/boot/gdt.h>
 #include <kernel/boot/idt.h>
@@ -123,10 +124,36 @@ void kmain(void) {
   LIMINE_GET_RESP(executable_file);
   assert_release(executable_file_response != NULL);
   klog(
-    "[slightx]# %s %s",
+    "kernel: %s %s",
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
+
+  LIMINE_GET_RESP(module);
+  assert_release(module_response != NULL);
+  assert_release(module_response->module_count > 0);
+
+  klog(
+    "initrd: %s %s",
+    strview_from_cstr(module_response->modules[0]->path),
+    strview_from_cstr(module_response->modules[0]->string)
+  );
+
+  initrd ramdisk = {};
+  initrd_load(&ramdisk, make_const_span(
+    module_response->modules[0]->address,
+    module_response->modules[0]->size
+  ));
+
+  auto mount = vfs_mount(str_literal("/"), initrd_root(&ramdisk));
+  if (!mount.is_ok) {
+    panic("mount(initrd): %s", vfs_strerror(mount.err));
+  }
+
+  auto spawn = spawn_executable(str_literal("/apps/dummy.bin"));
+  if (!spawn.is_ok) {
+    panic("spawn(initrd): %s", spawn.err);
+  }
 
   scheduler_yield    ();
   scheduler_idle_loop();
