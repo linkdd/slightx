@@ -1,5 +1,7 @@
 #pragma once
 
+#include <klibc/mem/str.h>
+
 
 [[noreturn]] extern void panic(const char *fmt, ...);
 
@@ -18,7 +20,7 @@
     if (!(cond)) {                                                             \
       panic(                                                                   \
         "Assertion failed: %s, file %s, line %d\n",                            \
-        #cond, __FILE__, __LINE__                                              \
+        str_literal(#cond), str_literal(__FILE__), __LINE__                    \
       );                                                                       \
     }                                                                          \
   } while (false)
