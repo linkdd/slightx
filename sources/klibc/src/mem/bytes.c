@@ -74,11 +74,21 @@ int memcmp(const void *a, const void *b, size_t n) {
 }
 
 
-int strlen(const char *s) {
+size_t strlen(const char *s) {
   assert(s != NULL);
 
-  int count = 0;
-  while (*s++ != 0) count ++;
+  size_t count = 0;
+  while (*s++ != 0) count++;
+
+  return count;
+}
+
+
+size_t strnlen(const char *s, size_t maxlen) {
+  assert(s != NULL);
+
+  size_t count = 0;
+  while (count < maxlen && *s++ != 0) count++;
 
   return count;
 }
