@@ -13,3 +13,5 @@ void pmm_load(void);
 
 physical_address pmm_alloc(usize page_count);
 void             pmm_free (physical_address pa, usize page_count);
+
+uptr pmm_get_top(void);

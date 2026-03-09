@@ -1,4 +1,5 @@
 #include <liballoc.h>
+#include <limine.h>
 
 #include <klibc/collections/bitmap.h>
 #include <klibc/mem/align.h>
@@ -8,6 +9,7 @@
 #include <klibc/assert.h>
 
 #include <kernel/mem/heap.h>
+#include <kernel/mem/hhdm.h>
 #include <kernel/mem/pmm.h>
 
 
@@ -19,25 +21,16 @@ struct heap_block_hdr {
   usize  offset;
 };
 
-
 extern uptr kernel_region_end;
 
-static constexpr usize heap_map_bufalign = 8;
-static constexpr usize heap_map_bufsize  = (((HEAP_PAGE_COUNT) + ((heap_map_bufalign) - 1)) / (heap_map_bufalign) * (heap_map_bufalign));
-static u8 heap_map_buf[heap_map_bufsize];
-
-static spinlock heap_lock = {};
-static bitmap   heap_map  = {};
+static spinlock        heap_lock  = {};
+static virtual_address heap_start = {};
+static virtual_address heap_end   = {};
+static bitmap          heap_map   = {};
 
 
-static inline virtual_address heap_start(void) {
-  return (virtual_address){ .addr = align_ptr_up((uptr)&kernel_region_end, MM_VIRT_PAGE_SIZE) };
-}
-
-
-static inline virtual_address heap_end(void) {
-  virtual_address start = heap_start();
-  return (virtual_address){ .addr = start.addr + HEAP_SIZE };
+static inline usize heap_page_count(void) {
+  return (heap_end.addr - heap_start.addr) / MM_VIRT_PAGE_SIZE;
 }
 
 
@@ -47,17 +40,31 @@ void heap_init(void) {
 
 
 void heap_load(void) {
-  bitmap_init(&heap_map, make_span(heap_map_buf, heap_map_bufsize));
+  LIMINE_GET_RESP(hhdm);
+
+  usize phys_mem_size = pmm_get_top();
+
+  heap_start.addr = align_ptr_up(hhdm_response->offset + phys_mem_size, MM_PAGE_2MB);
+  heap_end  .addr = align_ptr_up(heap_start.addr       + phys_mem_size, MM_PAGE_2MB);
+
+  assert_release(heap_end.addr < (uptr)&kernel_region_end);
+
+  usize bitmap_bytes = align_size_up(heap_page_count() / 8, MM_PHYS_PAGE_SIZE);
+  usize bitmap_pages = bitmap_bytes / MM_PHYS_PAGE_SIZE;
+
+  physical_address bitmap_buf_paddr = pmm_alloc(bitmap_pages);
+  virtual_address  bitmap_buf_vaddr = hhdm_p2v(bitmap_buf_paddr);
+  bitmap_init(&heap_map, make_span(bitmap_buf_vaddr.ptr, bitmap_bytes));
 
   // guard pages
   bitmap_set(&heap_map, 0);
-  bitmap_set(&heap_map, HEAP_PAGE_COUNT - 1);
+  bitmap_set(&heap_map, heap_page_count() - 1);
 }
 
 
 // MARK: liballoc
 void *liballoc_alloc(int page_count) {
-  usize total_page_count     = HEAP_PAGE_COUNT;
+  usize total_page_count     = heap_page_count();
   usize requested_page_count = (usize)page_count;
 
   for (u64 page_range_start = 0; page_range_start < total_page_count; page_range_start++) {
@@ -77,8 +84,7 @@ void *liballoc_alloc(int page_count) {
     }
 
     if (found) {
-      virtual_address heap_base   = heap_start();
-      virtual_address block_start = { .addr = heap_base.addr + page_range_start * MM_VIRT_PAGE_SIZE };
+      virtual_address block_start = { .addr = heap_start.addr + page_range_start * MM_VIRT_PAGE_SIZE };
 
       bool success     = true;
       u64  page_offset = 0;
@@ -97,7 +103,7 @@ void *liballoc_alloc(int page_count) {
           vmm_get_kernel_page_map(),
           va,
           pa,
-          MM_PT_FLAG_WRITE | MM_PT_FLAG_GLOBAL,
+          MM_PT_FLAG_WRITE | MM_PT_FLAG_GLOBAL | MM_PT_FLAG_NX,
           MM_PAGE_4KB
         );
 
@@ -132,19 +138,17 @@ void *liballoc_alloc(int page_count) {
 int liballoc_free(void *ptr, int page_count) {
   if (ptr == NULL || page_count <= 0) return 0;
 
-  virtual_address heap_base_vaddr = heap_start();
-  virtual_address heap_end_vaddr  = heap_end();
-  virtual_address block           = { .ptr = ptr };
+  virtual_address block = { .ptr = ptr };
 
   if (
-    block.addr < heap_base_vaddr.addr ||
-    block.addr >= heap_end_vaddr.addr ||
+    block.addr < heap_start.addr ||
+    block.addr >= heap_end.addr ||
     !is_ptr_aligned(block.addr, MM_VIRT_PAGE_SIZE)
   ) {
     return -1;
   }
 
-  u64   page_range_base        = (block.addr - heap_base_vaddr.addr) / MM_VIRT_PAGE_SIZE;
+  u64   page_range_base        = (block.addr - heap_start.addr) / MM_VIRT_PAGE_SIZE;
   usize reclaimable_page_count = (usize)page_count;
   int   rc                     = 0;
 

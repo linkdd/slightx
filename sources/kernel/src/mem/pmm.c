@@ -83,6 +83,10 @@ void pmm_free(physical_address pa, usize page_count) {
 }
 
 
+uptr pmm_get_top(void) {
+  return instance.highest_page;
+}
+
 
 static void pmm__find_highest_page(pmm *self) {
   LIMINE_GET_RESP(memmap);
