@@ -11,6 +11,4 @@ struct vfs_file {
   vfs_node *node;
   u32       flags;
   u64       offset;
-
-  void *fs_data;
 };
