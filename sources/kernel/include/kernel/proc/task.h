@@ -7,6 +7,7 @@
 #include <kernel/mem/vmm.h>
 
 
+typedef u32         tid;
 typedef struct task task;
 
 
@@ -30,7 +31,7 @@ typedef enum : u8 {
 
 typedef struct task_desc task_desc;
 struct task_desc {
-  u32              task_id;
+  tid              task_id;
   task            *parent_task;
   usize            kstack_size;
   usize            ustack_size;
@@ -95,7 +96,7 @@ struct task_stack {
 };
 
 struct task {
-  u32        id;
+  tid        id;
   task_pin   pin;
   task_flags flags;
   task_state state;
@@ -118,7 +119,7 @@ struct task {
   struct {
     waitqueue_item  blocker;
     waitqueue       joiners;
-    task            *parent;
+    task           *parent;
   } lifecycle;
 };
 

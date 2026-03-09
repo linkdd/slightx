@@ -11,11 +11,13 @@
 
 #include <kernel/cpu/mp.h>
 
+#include <kernel/vfs/main.h>
+
 
 #define USER_CODE_BASE  0x400000ULL
 
 
-u32 spawn_kernel_task(task_entrypoint entrpoint) {
+tid spawn_kernel_task(task_entrypoint entrpoint) {
   allocator    a        = heap_allocator();
   percpu_data *cpu_data = mp_get_percpu_data();
 
@@ -40,7 +42,7 @@ u32 spawn_kernel_task(task_entrypoint entrpoint) {
 }
 
 
-u32 spawn_user_task(const_span binary) {
+tid spawn_user_task(const_span binary) {
   assert(binary.data != NULL);
   assert(binary.size > 0);
 
@@ -94,4 +96,33 @@ u32 spawn_user_task(const_span binary) {
   runqueue_enqueue(&cpu_data->scheduler.tasks, t);
 
   return desc.task_id;
+}
+
+
+RESULT(tid, str) spawn_executable(str path) {
+  auto stat = vfs_stat(path);
+  if (!stat.is_ok) {
+    return (RESULT(tid, str)) ERR(vfs_strerror(stat.err));
+  }
+
+  auto f = vfs_open(path, VFS_O_READ);
+  if (!f.is_ok) {
+    return (RESULT(tid, str)) ERR(vfs_strerror(f.err));
+  }
+
+  usize  bufsz  = (usize)stat.ok.size;
+  void  *buffer = allocate(heap_allocator(), bufsz);
+  span   binary = make_span(buffer, bufsz);
+
+  auto read = vfs_read(f.ok, binary);
+  assert(vfs_close(f.ok).is_ok);
+
+  if (!read.is_ok) {
+    return (RESULT(tid, str)) ERR(vfs_strerror(read.err));
+  }
+
+  u32 tid = spawn_user_task(span_as_const(binary));
+  deallocate(heap_allocator(), buffer, bufsz);
+
+  return (RESULT(tid, str)) OK(tid);
 }
