@@ -19,6 +19,10 @@ RESULT(str, vfs_err) vfs_readlink(str path, allocator a) {
 
   vfs_node_ref self = node.ok;
 
+  if (self->type != VFS_NODETYPE_SYMLINK) {
+    return (RESULT(str, vfs_err)) ERR(VFS_EINVAL);
+  }
+
   if (self->ops == NULL || self->ops->readlink == NULL) {
     vfs_node_decref(self);
     return (RESULT(str, vfs_err)) ERR(VFS_ENOSYS);
