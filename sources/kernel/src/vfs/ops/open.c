@@ -65,11 +65,11 @@ RESULT(vfs_file_ref, vfs_err) vfs_open(str path, u32 flags) {
 
   vfs_node_ref self = node.ok;
 
-  if (self->type == VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) != 0) {
+  if (self->type != VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) != 0) {
     vfs_node_decref(self);
     return (RESULT(vfs_file_ref, vfs_err)) ERR(VFS_ENOTDIR);
   }
-  else if (self->type != VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) == 0) {
+  else if (self->type == VFS_NODETYPE_DIRECTORY && (flags & VFS_O_DIRECTORY) == 0) {
     vfs_node_decref(self);
     return (RESULT(vfs_file_ref, vfs_err)) ERR(VFS_EISDIR);
   }
