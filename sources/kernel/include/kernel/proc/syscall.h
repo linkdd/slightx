@@ -3,10 +3,12 @@
 #include <klibc/types.h>
 
 
-#define SYS_EXIT   0
-#define SYS_WRITE  1
+typedef enum : u64 {
+  SYSC_EXIT = 0,
+  SYSC_WRITE = 1,
 
-#define SYS_MAX    2
+  SYSC__COUNT,
+} syscall_num;
 
 
 // Syscall ABI (System V AMD64):

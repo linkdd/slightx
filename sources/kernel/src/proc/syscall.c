@@ -33,9 +33,9 @@ static i64 sys_write(syscall_frame *frame) {
 
 // MARK: - table
 
-static syscall_fn syscall_table[SYS_MAX] = {
-  [SYS_EXIT]  = sys_exit,
-  [SYS_WRITE] = sys_write,
+static syscall_fn syscall_table[SYSC__COUNT] = {
+  [SYSC_EXIT]  = sys_exit,
+  [SYSC_WRITE] = sys_write,
 };
 
 
@@ -63,7 +63,7 @@ void syscall_load(void) {
 void syscall_handler(syscall_frame *frame) {
   u64 syscall_nr = frame->rax;
 
-  if (syscall_nr >= SYS_MAX || syscall_table[syscall_nr] == NULL) {
+  if (syscall_nr >= SYSC__COUNT || syscall_table[syscall_nr] == NULL) {
     klog("[syscall] unknown syscall %x", syscall_nr);
     frame->rax = (u64)(-1LL);
     return;
