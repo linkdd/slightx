@@ -11,6 +11,8 @@
 
 #include <kernel/boot/exc.h>
 #include <kernel/cpu/cpuid.h>
+#include <kernel/cpu/percpu.h>
+#include <kernel/cpu/mp.h>
 
 #include <klibc/mem/align.h>
 #include <klibc/mem/bytes.h>
@@ -162,25 +164,44 @@ static inline page_table_entry *pd_get_or_create(
 
 // MARK: PF handler
 void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
-  *cf = INTERRUPT_CONTROLFLOW_HALT;
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
 
-  klog("=== PAGE FAULT ===");
-  klog(" ADDRESS:   %x", iframe->cr2);
-  klog(" LOCATION:  %x", iframe->rip);
-  klog(" ERROR:     P=%d WR=%d US=%d RSVD=%d ID=%d PK=%d SS=%d",
-    (i64)((iframe->err_code >> 0) & 1),
-    (i64)((iframe->err_code >> 1) & 1),
-    (i64)((iframe->err_code >> 2) & 1),
-    (i64)((iframe->err_code >> 3) & 1),
-    (i64)((iframe->err_code >> 4) & 1),
-    (i64)((iframe->err_code >> 5) & 1),
-    (i64)((iframe->err_code >> 6) & 1)
-  );
-  klog(" REGISTERS:");
-  klog("  CR0[%x]",    iframe->cr0);
-  klog("  CR3[%x]",    iframe->cr3);
-  klog("  CR4[%x]",    iframe->cr4);
-  klog("  RFLAGS[%x]", iframe->rflags);
+  if (cur != NULL && (iframe->err_code & 0b100) != 0) {
+    *cf = INTERRUPT_CONTROLFLOW_RETURN;
+
+    virtual_address vaddr = { .addr = iframe->cr2 };
+
+    if (vmm_is_mapped(cur->pmap, vaddr)) {
+      task_set_zombie(cur, TASK_EXIT_FAIL_GUARDPAGE);
+    }
+    else {
+      task_set_zombie(cur, TASK_EXIT_FAIL_SEGFAULT);
+    }
+
+    scheduler_yield();
+  }
+  else {
+    *cf = INTERRUPT_CONTROLFLOW_HALT;
+
+    klog("=== PAGE FAULT ===");
+    klog(" ADDRESS:   %x", iframe->cr2);
+    klog(" LOCATION:  %x", iframe->rip);
+    klog(" ERROR:     P=%d WR=%d US=%d RSVD=%d ID=%d PK=%d SS=%d",
+      (i64)((iframe->err_code >> 0) & 1),
+      (i64)((iframe->err_code >> 1) & 1),
+      (i64)((iframe->err_code >> 2) & 1),
+      (i64)((iframe->err_code >> 3) & 1),
+      (i64)((iframe->err_code >> 4) & 1),
+      (i64)((iframe->err_code >> 5) & 1),
+      (i64)((iframe->err_code >> 6) & 1)
+    );
+    klog(" REGISTERS:");
+    klog("  CR0[%x]",    iframe->cr0);
+    klog("  CR3[%x]",    iframe->cr3);
+    klog("  CR4[%x]",    iframe->cr4);
+    klog("  RFLAGS[%x]", iframe->rflags);
+  }
 }
 
 
