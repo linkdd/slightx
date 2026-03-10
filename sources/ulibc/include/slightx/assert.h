@@ -1,14 +1,14 @@
 #pragma once
 
-#include <slightx/mem/str.h>
-
-
-void panic(const char *fmt, ...);
+#include <slightx/sys/proc.h>
+#include <slightx/sys/io.h>
 
 
 #ifdef assert
 #undef assert
 #endif
+
+#define _assert_stringify(x)  #x
 
 #define _assert_disabled(cond)                                                 \
   do {                                                                         \
@@ -18,10 +18,12 @@ void panic(const char *fmt, ...);
 #define _assert_enabled(cond)                                                  \
   do {                                                                         \
     if (!(cond)) {                                                             \
-      panic(                                                                   \
-        "Assertion failed: %s, file %s, line %d\n",                            \
-        str_literal(#cond), str_literal(__FILE__), __LINE__                    \
-      );                                                                       \
+      sys_puts(str_literal(                                                    \
+        "Assertion failed: " #cond ", "                                        \
+        "file " __FILE__ ", line " _assert_stringify(__LINE__)                 \
+        "\n"                                                                   \
+      ));                                                                      \
+      sys_exit(127);                                                           \
     }                                                                          \
   } while (false)
 
