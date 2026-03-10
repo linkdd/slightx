@@ -258,7 +258,6 @@ void scheduler_load(void) {
     .parent_task = NULL,
     .kstack_size = 16 * 1024,
     .ustack_size = 0,
-    .parent_pmap = NULL,
     .entrypoint  = { .fn = idle_task_fn, .arg = NULL },
     .pin         = { .enabled = true, .processor_id = cpu_data->processor_id },
     .flags       = TH_TASK_FLAG_KERNEL | TH_TASK_FLAG_DETACHED,
