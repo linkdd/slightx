@@ -27,9 +27,40 @@ set(KERNEL_LD_FLAGS
   -Wl,-z,max-page-size=0x1000
   -Wl,-z,noexecstack
   -Wl,--build-id=none
-  -Wl,-T,${CMAKE_SOURCE_DIR}/toolchain/linker.ld
+  -Wl,-T,${CMAKE_SOURCE_DIR}/toolchain/kernel.linker.ld
+)
+
+set(USERLAND_C_FLAGS
+  -Wall
+  -Wextra
+  -ffreestanding
+  -fno-pie
+  -fno-pic
+  -march=x86-64
+  -mabi=sysv
+  -mno-aes
+  -mno-mmx
+  -mno-pclmul
+  -mno-sse
+  -mno-sse2
+  -mno-sse3
+  -mno-sse4
+  -mno-sse4a
+  -mno-fma4
+  -mno-ssse3
+  -msoft-float
+)
+
+set(USERLAND_LD_FLAGS
+  -static
+  -nostdlib
+  -Wl,-z,max-page-size=0x1000
+  -Wl,-z,noexecstack
+  -Wl,--build-id=none
+  -Wl,-T,${CMAKE_SOURCE_DIR}/toolchain/userland.linker.ld
 )
 
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-  set(KERNEL_C_FLAGS -g ${KERNEL_C_FLAGS})
+  set(KERNEL_C_FLAGS   -g ${KERNEL_C_FLAGS})
+  set(USERLAND_C_FLAGS -g ${USERLAND_C_FLAGS})
 endif()
