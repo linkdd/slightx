@@ -46,7 +46,7 @@ void pmm_load(void) {
 }
 
 
-physical_address pmm_alloc(usize page_count) {
+physical_address pmm_try_alloc(usize page_count) {
   spinlock_acquire(&instance.lock);
 
   usize total_page_count = pmm__get_page_count(&instance);
@@ -73,7 +73,18 @@ physical_address pmm_alloc(usize page_count) {
   }
 
   spinlock_release(&instance.lock);
-  panic("[pmm] No free pages available");
+  return (physical_address) { .ptr = NULL };
+}
+
+
+physical_address pmm_alloc(usize page_count) {
+  physical_address paddr = pmm_try_alloc(page_count);
+
+  if (paddr.ptr == NULL) {
+    panic("[pmm] No free pages available");
+  }
+
+  return paddr;
 }
 
 
