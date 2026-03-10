@@ -14,28 +14,58 @@ extern void syscall_entry_stub(void);
 
 // MARK: - implementations
 
-static i64 sys_exit(syscall_frame *frame) {
+static u64 sysc_exit(syscall_frame *frame) {
   i32 exit_code = (i32)frame->rdi;
   thread_exit_from_task(exit_code);
   // unreachable
 }
 
-static i64 sys_write(syscall_frame *frame) {
+
+static u64 sysc_mmap(syscall_frame *frame) {
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
+
+  void            *addr   = (void*)          frame->rdi;
+  usize            length = (usize)          frame->rsi;
+  task_mmap_flags  flags  = (task_mmap_flags)frame->rdx;
+
+  void *result = task_mmap(cur, addr, length, flags);
+
+  return (u64)(uptr)result;
+}
+
+
+static u64 sysc_munmap(syscall_frame *frame) {
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
+
+  void *addr   = (void*)frame->rdi;
+  usize length = (usize)frame->rsi;
+
+  task_munmap(cur, addr, length);
+
+  return 0;
+}
+
+
+static u64 sysc_write(syscall_frame *frame) {
   char  *buf = (char*)frame->rdi;
   usize  len = (usize)frame->rsi;
 
   str s = { .data = buf, .length = len };
   console_write(s);
 
-  return (i64)len;
+  return (u64)len;
 }
 
 
 // MARK: - table
 
 static syscall_fn syscall_table[SYSC__COUNT] = {
-  [SYSC_EXIT]  = sys_exit,
-  [SYSC_WRITE] = sys_write,
+  [SYSC_EXIT]   = sysc_exit,
+  [SYSC_MMAP]   = sysc_mmap,
+  [SYSC_MUNMAP] = sysc_munmap,
+  [SYSC_WRITE]  = sysc_write,
 };
 
 
@@ -69,5 +99,5 @@ void syscall_handler(syscall_frame *frame) {
     return;
   }
 
-  frame->rax = (u64)syscall_table[syscall_nr](frame);
+  frame->rax = syscall_table[syscall_nr](frame);
 }

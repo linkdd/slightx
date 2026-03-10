@@ -8,7 +8,7 @@ _start:
   ; SYS_WRITE(buf, len): rax=1, rdi=buf, rsi=len
   lea rdi, [rel .msg]
   mov rsi, .msg_end - .msg
-  mov rax, 1          ; SYS_WRITE
+  mov rax, 3          ; SYS_WRITE
   syscall
 
   ; SYS_EXIT(0): rax=0, rdi=exit_code

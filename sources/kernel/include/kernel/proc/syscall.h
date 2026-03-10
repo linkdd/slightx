@@ -4,8 +4,12 @@
 
 
 typedef enum : u64 {
-  SYSC_EXIT = 0,
-  SYSC_WRITE = 1,
+  SYSC_EXIT  = 0,
+
+  SYSC_MMAP,
+  SYSC_MUNMAP,
+
+  SYSC_WRITE,
 
   SYSC__COUNT,
 } syscall_num;
@@ -42,7 +46,7 @@ struct syscall_frame {
   u64 rsp;  // saved user RSP
 };
 
-typedef i64 (*syscall_fn)(syscall_frame *frame);
+typedef u64 (*syscall_fn)(syscall_frame *frame);
 
 
 void syscall_init(void);
