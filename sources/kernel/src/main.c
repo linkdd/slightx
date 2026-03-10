@@ -34,6 +34,8 @@
 
 #include <kernel/vfs/main.h>
 
+#include <kernel/args.h>
+
 
 static void init_static_globals(void) {
   klogger_init();
@@ -129,6 +131,11 @@ void kmain(void) {
     strview_from_cstr(executable_file_response->executable_file->string)
   );
 
+  auto args = args_parse(strview_from_cstr(executable_file_response->executable_file->string));
+  if (!args.is_ok) {
+    panic("invalid kernel command line");
+  }
+
   LIMINE_GET_RESP(module);
   assert_release(module_response != NULL);
   assert_release(module_response->module_count > 0);
@@ -150,9 +157,9 @@ void kmain(void) {
     panic("mount(initrd): %s", vfs_strerror(mount.err));
   }
 
-  auto spawn = spawn_executable(str_literal("/apps/dummy.bin"));
+  auto spawn = spawn_executable(args.ok.rdinit);
   if (!spawn.is_ok) {
-    panic("spawn(initrd): %s", spawn.err);
+    panic("spawn(rdinit): %s", spawn.err);
   }
 
   scheduler_yield    ();
