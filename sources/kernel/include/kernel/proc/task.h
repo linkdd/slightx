@@ -7,6 +7,10 @@
 #include <kernel/mem/vmm.h>
 
 
+#define TASK_EXIT_SUCCESS         ( 0)
+#define TASK_EXIT_FAIL_SEGFAULT   (-1)
+
+
 typedef u32         tid;
 typedef struct task task;
 
@@ -35,7 +39,6 @@ struct task_desc {
   task            *parent_task;
   usize            kstack_size;
   usize            ustack_size;
-  page_map        *parent_pmap;
   task_entrypoint  entrypoint;
   task_pin         pin;
   task_flags       flags;
@@ -95,6 +98,16 @@ struct task_stack {
   usize  size;
 };
 
+typedef struct task_mapping task_mapping;
+struct task_mapping {
+  virtual_address vaddr;
+  pt_flags        flags;
+  usize           page_count;
+
+  task_mapping *prev;
+  task_mapping *next;
+};
+
 struct task {
   tid        id;
   task_pin   pin;
@@ -105,7 +118,8 @@ struct task {
   task_stack   kstack;
   task_stack   ustack;
 
-  page_map *pmap;
+  page_map     *pmap;
+  task_mapping *mappings;
 
   struct {
     usize last_processor_id;
@@ -123,6 +137,13 @@ struct task {
   } lifecycle;
 };
 
+typedef enum : u8 {
+  TASK_MMAP_ACCESS_READ  = 1 << 0,
+  TASK_MMAP_ACCESS_WRITE = 1 << 1,
+  TASK_MMAP_ACCESS_EXEC  = 1 << 2,
+  TASK_MMAP_FIXED        = 1 << 3,
+} task_mmap_flags;
+
 
 void task_init  (task *self, const task_desc *desc);
 void task_deinit(task *self);
@@ -133,3 +154,6 @@ void task_set_blocked(task *self);
 void task_set_zombie (task *self, i32 exit_code);
 
 extern void task_context_switch(task_context *prev, task_context *next);
+
+void *task_mmap  (task *self, void *addr, usize length, task_mmap_flags flags);
+void  task_munmap(task *self, void *addr, usize length);

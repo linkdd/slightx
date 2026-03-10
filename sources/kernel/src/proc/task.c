@@ -1,15 +1,64 @@
 #include <klibc/assert.h>
+#include <klibc/mem/align.h>
 #include <klibc/mem/bytes.h>
 
 #include <kernel/proc/task.h>
+#include <kernel/mem/pmm.h>
+#include <kernel/mem/vmm.h>
 #include <kernel/mem/heap.h>
 #include <kernel/boot/gdt.h>
 
 
 extern void task_entrypoint_trampoline(void);
-extern void task_usermode_trampoline(void);
+extern void task_usermode_trampoline  (void);
 
 #define USER_STACK_TOP   0x00007FFFFFFFE000ULL
+
+
+static task_mapping *task_add_mapping(task *self) {
+  assert(self != NULL);
+
+  task_mapping *mapping = allocate(heap_allocator(), sizeof(task_mapping));
+
+  mapping->next = self->mappings;
+  if (self->mappings != NULL) {
+    self->mappings->prev = mapping;
+  }
+  mapping->prev  = NULL;
+  self->mappings = mapping;
+
+  return mapping;
+}
+
+
+static bool task_mapping_overlaps(task *self, uptr base, usize length) {
+  assert(self != NULL);
+
+  uptr end = base + length;
+
+  for (task_mapping *m = self->mappings; m != NULL; m = m->next) {
+    uptr m_base = m->vaddr.addr;
+    uptr m_end  = m_base + m->page_count * MM_VIRT_PAGE_SIZE;
+
+    if (!(end <= m_base || base >= m_end)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+static void task_del_mapping(task *self, task_mapping *mapping) {
+  assert(self != NULL);
+  assert(mapping != NULL);
+
+  if (mapping->prev != NULL) mapping->prev->next = mapping->next;
+  else                       self->mappings      = mapping->next;
+  if (mapping->next != NULL) mapping->next->prev = mapping->prev;
+
+  deallocate(heap_allocator(), mapping, sizeof(task_mapping));
+}
 
 
 void task_init(task *self, const task_desc *desc) {
@@ -57,11 +106,19 @@ void task_init(task *self, const task_desc *desc) {
   }
 
   self->pmap = allocate(a, sizeof(page_map));
-  if (desc->parent_pmap != NULL) {
-    vmm_clone_page_map(self->pmap, desc->parent_pmap);
+  if (desc->parent_task != NULL) {
+    vmm_clone_page_map(self->pmap, desc->parent_task->pmap);
+
+    for (task_mapping *m = desc->parent_task->mappings; m != NULL; m = m->next) {
+      task_mapping *m_copy = task_add_mapping(self);
+      m_copy->vaddr        = m->vaddr;
+      m_copy->flags        = m->flags;
+      m_copy->page_count   = m->page_count;
+    }
   }
   else {
     vmm_make_page_map(self->pmap);
+    self->mappings = NULL;
   }
 
   // For user tasks, map the user stack into the task's address space
@@ -134,6 +191,13 @@ void task_deinit(task *self) {
 
   allocator a = heap_allocator();
 
+  task_mapping *m = self->mappings;
+  while (m != NULL) {
+    task_mapping *next = m->next;
+    deallocate(a, m, sizeof(task_mapping));
+    m = next;
+  }
+
   vmm_destroy_page_map(self->pmap);
   deallocate(a, self->pmap, sizeof(page_map));
 
@@ -149,6 +213,7 @@ void task_deinit(task *self) {
 
   memset(self, 0, sizeof(task));
 }
+
 
 void task_set_ready(task *self) {
   assert(self != NULL);
@@ -193,4 +258,110 @@ void task_set_zombie(task *self, i32 exit_code) {
       .exit_code = exit_code,
     } },
   };
+}
+
+
+void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
+  assert(self != NULL);
+
+  if (length == 0) return NULL;
+
+  length = align_size_up(length, MM_VIRT_PAGE_SIZE);
+
+  if ((flags & TASK_MMAP_FIXED) != 0) {
+    if (
+      addr == NULL                                    ||
+      !is_ptr_aligned((uptr)addr, MM_VIRT_PAGE_SIZE)  ||
+      task_mapping_overlaps(self, (uptr)addr, length)
+    ) {
+      return NULL;
+    }
+  }
+  else {
+    uptr search_base  = 0x000100000000000ULL;
+    uptr search_limit = USER_STACK_TOP;
+
+    bool found = false;
+
+    for (uptr candidate = search_base; candidate + length < search_limit; candidate += MM_VIRT_PAGE_SIZE) {
+      if (!task_mapping_overlaps(self, candidate, length)) {
+        addr  = (void *)candidate;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      return NULL;
+    }
+  }
+
+  usize page_count = length / MM_VIRT_PAGE_SIZE;
+
+  if ((flags & TASK_MMAP_ACCESS_READ) != 0) {
+    usize mapped_pages = 0;
+
+    for (usize i = 0; i < page_count; ++i) {
+      physical_address paddr = pmm_try_alloc(1);
+      if (paddr.ptr == NULL) {
+        // rollback
+        for (usize j = 0; j < mapped_pages; ++j) {
+          virtual_address  vaddr = { .addr = (uptr)addr + j * MM_VIRT_PAGE_SIZE };
+          physical_address paddr = vmm_translate(self->pmap, vaddr);
+
+          vmm_unmap(self->pmap, vaddr);
+          pmm_free (paddr, 1);
+        }
+
+        return NULL;
+      }
+
+      virtual_address vaddr = { .addr = (uptr)addr + i * MM_VIRT_PAGE_SIZE };
+
+      pt_flags page_flags = MM_PT_FLAG_VALID | MM_PT_FLAG_USER;
+      if ((flags & TASK_MMAP_ACCESS_WRITE) != 0) page_flags |= MM_PT_FLAG_WRITE;
+      if ((flags & TASK_MMAP_ACCESS_EXEC)  == 0) page_flags |= MM_PT_FLAG_NX;
+
+      vmm_map(self->pmap, vaddr, paddr, page_flags, MM_PAGE_4KB);
+      mapped_pages++;
+    }
+  }
+
+  task_mapping *mapping = task_add_mapping(self);
+  mapping->vaddr.ptr    = addr;
+  mapping->flags        = flags;
+  mapping->page_count   = page_count;
+
+  return addr;
+}
+
+
+void task_munmap(task *self, void *addr, usize length) {
+  assert(self != NULL);
+
+  if (length == 0 || addr == NULL) return;
+
+  uptr  unmap_base = (uptr)addr;
+  usize unmap_len  = align_size_up(length, MM_VIRT_PAGE_SIZE);
+  uptr  unmap_end  = unmap_base + unmap_len;
+
+  for (task_mapping *m = self->mappings; m != NULL; m = m->next) {
+    uptr m_base = m->vaddr.addr;
+    uptr m_end  = m_base + m->page_count * MM_VIRT_PAGE_SIZE;
+
+    if (unmap_base == m_base && unmap_end == m_end) {
+      if ((m->flags & TASK_MMAP_ACCESS_READ) != 0) {
+        for (usize i = 0; i < m->page_count; ++i) {
+          virtual_address  vaddr = { .addr = m_base + i * MM_VIRT_PAGE_SIZE };
+          physical_address paddr = vmm_translate(self->pmap, vaddr);
+
+          vmm_unmap(self->pmap, vaddr);
+          pmm_free (paddr, 1);
+        }
+      }
+
+      task_del_mapping(self, m);
+      return;
+    }
+  }
 }
