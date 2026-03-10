@@ -458,6 +458,77 @@ physical_address vmm_translate(page_map *pmap, virtual_address va) {
 }
 
 
+// MARK: is_mapped
+
+static bool vmm_is_mapped_impl(page_map *pmap, virtual_address va) {
+  page_table_entry *pml4 = NULL;
+  page_table_entry  e;
+
+  switch (pmap->level) {
+    case PML5: {
+      page_table_entry *pml5 = pmap->directory;
+      e = pml5[pml5_index(va)];
+      if (!pte_present(e)) {
+        return false;
+      }
+      if (pte_large(e)) {
+        return true;
+      }
+      pml4 = pte_p2v(e);
+      break;
+    }
+
+    case PML4:
+      pml4 = pmap->directory;
+      break;
+
+    default:
+      panic("[vmm] vmm_is_mapped(): invalid page map level");
+  }
+
+  e = pml4[pml4_index(va)];
+  if (!pte_present(e)) {
+    return false;
+  }
+  if (pte_large(e)) {
+    return true;
+  }
+
+  page_table_entry *pml3 = pte_p2v(e);
+  e = pml3[pml3_index(va)];
+  if (!pte_present(e)) {
+    return false;
+  }
+  if (pte_large(e)) {
+    return true;
+  }
+
+  page_table_entry *pml2 = pte_p2v(e);
+  e = pml2[pml2_index(va)];
+  if (!pte_present(e)) {
+    return false;
+  }
+  if (pte_large(e)) {
+    return true;
+  }
+
+  page_table_entry *pml1 = pte_p2v(e);
+  e = pml1[pml1_index(va)];
+  if (!pte_present(e)) {
+    return false;
+  }
+
+  return true;
+}
+
+
+bool vmm_is_mapped(page_map *pmap, virtual_address va) {
+  if (pmap == &kernel_page_map) spinlock_acquire(&vmm_lock);
+  bool mapped = vmm_is_mapped_impl(pmap, va);
+  if (pmap == &kernel_page_map) spinlock_release(&vmm_lock);
+  return mapped;
+}
+
 
 // MARK: constructor
 void vmm_make_page_map(page_map *pmap) {

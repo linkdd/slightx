@@ -66,6 +66,7 @@ void vmm_switch_page_map(page_map *map);
 void vmm_invalidate_page(virtual_address va);
 
 physical_address vmm_translate(page_map *pmap, virtual_address va);
+bool             vmm_is_mapped(page_map *pmap, virtual_address va);
 
 void vmm_make_page_map   (page_map *pmap);
 void vmm_destroy_page_map(page_map *pmap);
