@@ -170,15 +170,7 @@ void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
   if (cur != NULL && (iframe->err_code & 0b100) != 0) {
     *cf = INTERRUPT_CONTROLFLOW_RETURN;
 
-    virtual_address vaddr = { .addr = iframe->cr2 };
-
-    if (vmm_is_mapped(cur->pmap, vaddr)) {
-      task_set_zombie(cur, TASK_EXIT_FAIL_GUARDPAGE);
-    }
-    else {
-      task_set_zombie(cur, TASK_EXIT_FAIL_SEGFAULT);
-    }
-
+    task_set_zombie(cur, TASK_EXIT_FAIL_SEGFAULT);
     scheduler_yield();
   }
   else {
