@@ -304,6 +304,19 @@ task *scheduler_get_task_by_id(u32 tid) {
 }
 
 
+void scheduler_kill_current_task(i32 exit_code) {
+  percpu_data *cpu_data     = mp_get_percpu_data();
+  task        *current_task = cpu_data->scheduler.current;
+
+  task_set_zombie   (current_task, exit_code);
+  waitqueue_wake_all(&current_task->lifecycle.joiners);
+
+  __asm__ volatile("cli" ::: "memory");
+  runqueue_enqueue(&cpu_data->scheduler.cleanup, current_task);
+  scheduler_yield();
+}
+
+
 static void scheduler_wake_task(void *udata) {
   task *t = (task *)udata;
   assert(t != NULL);
@@ -338,14 +351,6 @@ void scheduler_wakeup_after(u64 ns, waitqueue_item *wait) {
 
   percpu_data *cpu_data = mp_get_percpu_data();
   sleeperlist_add(&cpu_data->scheduler.sleepers, ns, wait);
-}
-
-
-void scheduler_schedule_for_cleanup(task *t) {
-  assert(t != NULL);
-
-  percpu_data *cpu_data = mp_get_percpu_data();
-  runqueue_enqueue(&cpu_data->scheduler.cleanup, t);
 }
 
 

@@ -57,15 +57,14 @@ void scheduler_load(void);
 
 u32 scheduler_get_next_tid(void);
 
-task *scheduler_get_current_task(void);
-task *scheduler_get_task_by_id(u32 tid);
+task *scheduler_get_current_task (void);
+task *scheduler_get_task_by_id   (u32 tid);
+void  scheduler_kill_current_task(i32 exit_code);
 
-waiter scheduler_make_waiter(task *t);
+waiter scheduler_make_waiter (task *t);
 void   scheduler_wakeup_after(u64 ns, waitqueue_item *wait);
 
-void scheduler_schedule_for_cleanup(task *t);
 void scheduler_cleanup(void);
-
-void scheduler_yield(void);
+void scheduler_yield  (void);
 
 [[noreturn]] void scheduler_idle_loop(void);

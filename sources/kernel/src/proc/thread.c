@@ -60,15 +60,6 @@ void thread_join(u32 tid) {
 
 
 [[noreturn]] void thread_exit_from_task(i32 exit_code) {
-  task *current_task = scheduler_get_current_task();
-  assert(current_task != NULL);
-
-  task_set_zombie   (current_task, exit_code);
-  waitqueue_wake_all(&current_task->lifecycle.joiners);
-
-  __asm__ volatile("cli" ::: "memory");
-  scheduler_schedule_for_cleanup(current_task);
-  scheduler_yield();
-
+  scheduler_kill_current_task(exit_code);
   unreachable();
 }

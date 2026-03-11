@@ -170,8 +170,7 @@ void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
   if (cur != NULL && (iframe->err_code & 0b100) != 0) {
     *cf = INTERRUPT_CONTROLFLOW_RETURN;
 
-    task_set_zombie(cur, TASK_EXIT_FAIL_SEGFAULT);
-    scheduler_yield();
+    scheduler_kill_current_task(TASK_EXIT_FAIL_SEGFAULT);
   }
   else {
     *cf = INTERRUPT_CONTROLFLOW_HALT;
