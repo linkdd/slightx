@@ -31,8 +31,6 @@
 #include <kernel/proc/spawn.h>
 #include <kernel/proc/syscall.h>
 
-#include <kernel/vfs/main.h>
-
 
 static void init_static_globals(void) {
   klogger_init();
@@ -50,7 +48,6 @@ static void init_static_globals(void) {
 
   scheduler_init();
   syscall_init  ();
-  vfs_init      ();
 }
 
 
