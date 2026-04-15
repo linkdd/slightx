@@ -76,6 +76,8 @@ void task_init(task *self, const task_desc *desc) {
   self->id    = desc->task_id;
   self->pin   = desc->pin;
   self->flags = desc->flags;
+  self->uid   = desc->uid;
+  self->gid   = desc->gid;
 
   self->state = (task_state){
     .type = TH_TASK_STATE_NEW,
@@ -215,15 +217,6 @@ void task_deinit(task *self) {
     task_mapping *next = m->next;
     deallocate(a, m, sizeof(task_mapping));
     m = next;
-  }
-
-  if ((self->flags & TH_TASK_FLAG_KERNEL) == 0) {
-    for (uptr addr = USER_ARG_BASE; ; addr += MM_VIRT_PAGE_SIZE) {
-      virtual_address va = { .addr = addr };
-      if (!vmm_is_mapped(self->pmap, va)) break;
-      physical_address pa = vmm_translate(self->pmap, va);
-      pmm_free(pa, 1);
-    }
   }
 
   vmm_destroy_page_map(self->pmap);

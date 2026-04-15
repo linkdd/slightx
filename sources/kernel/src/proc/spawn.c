@@ -25,6 +25,8 @@ tid spawn_kernel_task(task_entrypoint entrpoint) {
     .entrypoint  = entrpoint,
     .pin         = { .enabled = false },
     .flags       = TH_TASK_FLAG_KERNEL,
+    .uid         = 0,
+    .gid         = 0,
   };
 
   task_init       (t, &desc);
@@ -41,6 +43,8 @@ tid spawn_user_task(const_span binary, const char *arg) {
 
   allocator    a        = heap_allocator();
   percpu_data *cpu_data = mp_get_percpu_data();
+
+  task *current_task = scheduler_get_current_task();
 
   usize             bin_page_count  = (binary.size + MM_VIRT_PAGE_SIZE - 1) / MM_VIRT_PAGE_SIZE;
   physical_address *bin_page_paddrs = allocate(a, sizeof(physical_address) * bin_page_count);
@@ -68,6 +72,8 @@ tid spawn_user_task(const_span binary, const char *arg) {
     .entrypoint  = { .fn = (void (*)(void *))USER_CODE_BASE, .arg = (void*) arg },
     .pin         = { .enabled = false },
     .flags       = TH_TASK_FLAG_DETACHED,
+    .uid         = (current_task != NULL ? current_task->uid : 0),
+    .gid         = (current_task != NULL ? current_task->gid : 0),
   };
 
   task_init(t, &desc);

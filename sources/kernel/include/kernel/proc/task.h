@@ -41,6 +41,8 @@ struct task_desc {
   task_entrypoint  entrypoint;
   task_pin         pin;
   task_flags       flags;
+  u32              uid;
+  u32              gid;
 };
 
 typedef enum : u8 {
@@ -103,6 +105,9 @@ struct task {
   task_pin   pin;
   task_flags flags;
   task_state state;
+
+  u32 uid;
+  u32 gid;
 
   task_context context;
   task_stack   kstack;
