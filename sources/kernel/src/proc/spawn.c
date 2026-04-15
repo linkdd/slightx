@@ -2,7 +2,7 @@
 #include <klibc/mem/bytes.h>
 
 #include <kernel/proc/spawn.h>
-#include <kernel/proc/scheduler.h>
+#include <kernel/proc/scheduler/controller.h>
 
 #include <kernel/mem/heap.h>
 #include <kernel/mem/pmm.h>
@@ -12,9 +12,6 @@
 #include <kernel/cpu/mp.h>
 
 #include <kernel/vfs/main.h>
-
-
-#define USER_CODE_BASE  0x400000ULL
 
 
 tid spawn_kernel_task(task_entrypoint entrpoint) {

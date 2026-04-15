@@ -27,7 +27,7 @@
 
 #include <kernel/cpu/mp.h>
 
-#include <kernel/proc/scheduler.h>
+#include <kernel/proc/scheduler/controller.h>
 #include <kernel/proc/thread.h>
 #include <kernel/proc/spawn.h>
 #include <kernel/proc/syscall.h>

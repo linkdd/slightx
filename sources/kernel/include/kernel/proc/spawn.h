@@ -7,6 +7,9 @@
 #include <kernel/proc/task.h>
 
 
+#define USER_CODE_BASE  0x400000ULL
+
+
 RESULT_DECL(tid, str);
 
 tid spawn_kernel_task(task_entrypoint entrypoint);

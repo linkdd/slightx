@@ -1,10 +1,7 @@
 #include <klibc/assert.h>
-#include <klibc/sync/lock.h>
 
-#include <kernel/proc/scheduler.h>
-#include <kernel/chrono/time.h>
+#include <kernel/proc/scheduler/controller.h>
 #include <kernel/mem/heap.h>
-#include <kernel/mem/vmm.h>
 #include <kernel/cpu/mp.h>
 #include <kernel/halt.h>
 
@@ -12,219 +9,6 @@
 static spinlock scheduler_lock = {};
 static u32      next_task_id   = 1;
 
-
-// MARK: - runqueue
-
-void runqueue_init(runqueue *self) {
-  assert(self != NULL);
-
-  spinlock_init(&self->lock);
-  self->head  = NULL;
-  self->tail  = NULL;
-  self->count = 0;
-}
-
-
-void runqueue_enqueue(runqueue *self, task *t) {
-  assert(self != NULL);
-  assert(t != NULL);
-
-  spinlock_acquire(&self->lock);
-
-  t->scheduling.siblings.prev = self->tail;
-  t->scheduling.siblings.next = NULL;
-
-  if (self->tail != NULL) {
-    self->tail->scheduling.siblings.next = t;
-  }
-  self->tail = t;
-
-  if (self->head == NULL) {
-    self->head = t;
-  }
-
-  self->count += 1;
-
-  spinlock_release(&self->lock);
-}
-
-
-task *runqueue_dequeue(runqueue *self) {
-  assert(self != NULL);
-
-  spinlock_acquire(&self->lock);
-
-  task *t = self->head;
-  if (t != NULL) {
-    self->head = t->scheduling.siblings.next;
-    if (self->head != NULL) {
-      self->head->scheduling.siblings.prev = NULL;
-    }
-    else {
-      self->tail = NULL;
-    }
-
-    t->scheduling.siblings.prev = NULL;
-    t->scheduling.siblings.next = NULL;
-
-    self->count -= 1;
-  }
-
-  spinlock_release(&self->lock);
-
-  return t;
-}
-
-
-void runqueue_remove(runqueue *self, task *t) {
-  assert(self != NULL);
-  assert(t != NULL);
-
-  spinlock_acquire(&self->lock);
-
-  if (t->scheduling.siblings.prev != NULL) {
-    t->scheduling.siblings.prev->scheduling.siblings.next = t->scheduling.siblings.next;
-  }
-  else {
-    self->head = t->scheduling.siblings.next;
-  }
-
-  if (t->scheduling.siblings.next != NULL) {
-    t->scheduling.siblings.next->scheduling.siblings.prev = t->scheduling.siblings.prev;
-  }
-  else {
-    self->tail = t->scheduling.siblings.prev;
-  }
-
-  t->scheduling.siblings.prev = NULL;
-  t->scheduling.siblings.next = NULL;
-
-  self->count -= 1;
-
-  spinlock_release(&self->lock);
-}
-
-
-bool runqueue_is_empty(runqueue *self) {
-  assert(self != NULL);
-
-  spinlock_acquire(&self->lock);
-  bool is_empty = (self->count == 0);
-  spinlock_release(&self->lock);
-
-  return is_empty;
-}
-
-
-static task *runqueue_find_by_id(runqueue *self, u32 tid) {
-  assert(self != NULL);
-
-  spinlock_acquire(&self->lock);
-
-  for (
-    task *iter = self->head;
-    iter != NULL;
-    iter = iter->scheduling.siblings.next
-  ) {
-    if (iter->id == tid) {
-      spinlock_release(&self->lock);
-      return iter;
-    }
-  }
-
-  spinlock_release(&self->lock);
-  return NULL;
-}
-
-
-// MARK: - sleepers
-
-void sleeperlist_init(sleeperlist *self) {
-  assert(self != NULL);
-
-  spinlock_init(&self->lock);
-  self->head  = NULL;
-  self->tail  = NULL;
-  self->count = 0;
-}
-
-
-void sleeperlist_add(sleeperlist *self, u64 duration, waitqueue_item *w) {
-  assert(self != NULL);
-  assert(w != NULL);
-
-  allocator a = heap_allocator();
-
-  sleeper *s = allocate(a, sizeof(sleeper));
-  timer_init (&s->timer, uptime_ns);
-  timer_start(&s->timer);
-
-  s->duration_ns = duration;
-  s->w           = w;
-
-  spinlock_acquire(&self->lock);
-
-  s->siblings.prev = self->tail;
-  s->siblings.next = NULL;
-
-  if (self->tail != NULL) {
-    self->tail->siblings.next = s;
-  }
-  self->tail = s;
-
-  if (self->head == NULL) {
-    self->head = s;
-  }
-
-  self->count += 1;
-
-  spinlock_release(&self->lock);
-}
-
-
-void sleeperlist_tick(sleeperlist *self) {
-  assert(self != NULL);
-
-  allocator a = heap_allocator();
-
-  spinlock_acquire(&self->lock);
-
-  sleeper *s = self->head;
-  while (s != NULL) {
-    sleeper *next = s->siblings.next;
-
-    if (timer_elapsed_ns(&s->timer) >= s->duration_ns) {
-      if (s->w->waiter.wake != NULL) {
-        s->w->waiter.wake(s->w->waiter.udata);
-      }
-
-      if (s->siblings.prev != NULL) {
-        s->siblings.prev->siblings.next = s->siblings.next;
-      }
-      else {
-        self->head = s->siblings.next;
-      }
-
-      if (s->siblings.next != NULL) {
-        s->siblings.next->siblings.prev = s->siblings.prev;
-      }
-      else {
-        self->tail = s->siblings.prev;
-      }
-
-      self->count -= 1;
-
-      deallocate(a, s, sizeof(sleeper));
-    }
-
-    s = next;
-  }
-
-  spinlock_release(&self->lock);
-}
-
-
-// MARK: - scheduler
 
 static void idle_task_fn(void *arg) {
   (void)arg;
@@ -269,6 +53,16 @@ void scheduler_load(void) {
 
   cpu_data->scheduler.idle    = idle_task;
   cpu_data->scheduler.current = idle_task;
+}
+
+
+void scheduler_tick(u64 ns) {
+  percpu_data *cpu = mp_get_percpu_data();
+
+  cpu->scheduler.uptime_ns += ns;
+
+  sleeperlist_tick (&cpu->scheduler.sleepers);
+  scheduler_cleanup();
 }
 
 

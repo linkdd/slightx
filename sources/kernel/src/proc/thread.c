@@ -1,7 +1,7 @@
 #include <klibc/assert.h>
 
 #include <kernel/proc/thread.h>
-#include <kernel/proc/scheduler.h>
+#include <kernel/proc/scheduler/controller.h>
 
 
 u32 thread_current_id(void) {
