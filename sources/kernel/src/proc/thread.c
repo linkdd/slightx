@@ -4,7 +4,7 @@
 #include <kernel/proc/scheduler/controller.h>
 
 
-u32 thread_current_id(void) {
+tid thread_current_id(void) {
   task *current_task = scheduler_get_current_task();
   assert(current_task != NULL);
 
@@ -29,7 +29,7 @@ void thread_sleep(u64 ns) {
 }
 
 
-void thread_join(u32 tid) {
+void thread_join(tid tid) {
   task *current_task = scheduler_get_current_task();
   assert(current_task != NULL);
 
