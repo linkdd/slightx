@@ -15,3 +15,34 @@
   __asm__ volatile ("ud2");
   unreachable();
 }
+
+
+u32 sys_spawn(const_span binary) {
+  __asm__ volatile (
+    "syscall"
+    :
+    : "a" ((u64)SYSC_SPAWN),
+      "D" ((u64)binary.data),
+      "S" ((u64)binary.size)
+    : "rcx", "r11", "memory"
+  );
+
+  u64 tid;
+  __asm__ volatile (
+    "mov %%rax, %0"
+    : "=r" (tid)
+  );
+
+  return (u32)tid;
+}
+
+
+void sys_join(u32 tid) {
+  __asm__ volatile (
+    "syscall"
+    :
+    : "a" ((u64)SYSC_JOIN),
+      "D" ((u64)tid)
+    : "rcx", "r11", "memory"
+  );
+}

@@ -2,10 +2,14 @@
 #include <klibc/assert.h>
 
 #include <kernel/boot/gdt.h>
+
 #include <kernel/cpu/msr.h>
 #include <kernel/cpu/mp.h>
+
 #include <kernel/proc/syscall.h>
 #include <kernel/proc/thread.h>
+#include <kernel/proc/spawn.h>
+
 #include <kernel/drivers/console.h>
 
 
@@ -18,6 +22,22 @@ static i64 sysc_exit(syscall_frame *frame) {
   i32 exit_code = (i32)frame->rdi;
   thread_exit_from_task(exit_code);
   unreachable();
+}
+
+
+static i64 sysc_spawn(syscall_frame *frame) {
+  const void *data = (const void*)frame->rdi;
+  usize       len  = (usize)      frame->rsi;
+
+  const_span binary = make_const_span(data, len);
+
+  return (i64)spawn_user_task(binary);
+}
+
+
+static i64 sysc_join(syscall_frame *frame) {
+  thread_join((tid)frame->rdi);
+  return 0;
 }
 
 
@@ -63,8 +83,12 @@ static i64 sysc_puts(syscall_frame *frame) {
 
 static syscall_fn syscall_table[SYSC__COUNT] = {
   [SYSC_EXIT]   = sysc_exit,
+  [SYSC_SPAWN]  = sysc_spawn,
+  [SYSC_JOIN]   = sysc_join,
+
   [SYSC_MMAP]   = sysc_mmap,
   [SYSC_MUNMAP] = sysc_munmap,
+
   [SYSC_PUTS]   = sysc_puts,
 };
 
