@@ -2,7 +2,11 @@
 #include <slightx/sys/io.h>
 
 
-[[noreturn]] void _start(void) {
-  sys_puts(str_literal("Hello from userland\n"));
+[[noreturn]] void _start(const char *arg) {
+  sys_puts(str_literal("Hello from userland: "));
+  if (arg != NULL) {
+    sys_puts(strview_from_cstr(arg));
+  }
+  sys_puts(str_literal("\n"));
   sys_exit(0);
 }

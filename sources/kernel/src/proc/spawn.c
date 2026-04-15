@@ -35,7 +35,7 @@ tid spawn_kernel_task(task_entrypoint entrpoint) {
 }
 
 
-tid spawn_user_task(const_span binary) {
+tid spawn_user_task(const_span binary, const char *arg) {
   assert(binary.data != NULL);
   assert(binary.size > 0);
 
@@ -65,7 +65,7 @@ tid spawn_user_task(const_span binary) {
     .task_id     = scheduler_get_next_tid(),
     .kstack_size = 16 * 1024,
     .ustack_size = 16 * 1024,
-    .entrypoint  = { .fn = (void (*)(void *))USER_CODE_BASE, .arg = NULL },
+    .entrypoint  = { .fn = (void (*)(void *))USER_CODE_BASE, .arg = (void*) arg },
     .pin         = { .enabled = false },
     .flags       = TH_TASK_FLAG_DETACHED,
   };

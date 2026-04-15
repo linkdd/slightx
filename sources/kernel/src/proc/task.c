@@ -6,13 +6,15 @@
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
 #include <kernel/mem/heap.h>
+#include <kernel/mem/hhdm.h>
 #include <kernel/boot/gdt.h>
 
 
-extern void task_entrypoint_trampoline(void);
+extern void task_kernelmode_trampoline(void);
 extern void task_usermode_trampoline  (void);
 
 #define USER_STACK_TOP   0x00007FFFFFFFE000ULL
+#define USER_ARG_BASE    0x00007FFFFF000000ULL
 
 
 static task_mapping *task_add_mapping(task *self) {
@@ -143,11 +145,41 @@ void task_init(task *self, const task_desc *desc) {
   if ((desc->flags & TH_TASK_FLAG_KERNEL) != 0) {
     *(--stack) = (u64)desc->entrypoint.arg;
     *(--stack) = (u64)desc->entrypoint.fn;
-    *(--stack) = (u64)task_entrypoint_trampoline;
+    *(--stack) = (u64)task_kernelmode_trampoline;
 
-    self->context.rip = (u64)task_entrypoint_trampoline;
+    self->context.rip = (u64)task_kernelmode_trampoline;
   }
   else {
+    u64 user_arg = 0;
+
+    if (desc->entrypoint.arg != NULL) {
+      usize arg_len    = strlen((const char *)desc->entrypoint.arg) + 1;
+      usize page_count = align_size_up(arg_len, MM_VIRT_PAGE_SIZE) / MM_VIRT_PAGE_SIZE;
+
+      for (usize i = 0; i < page_count; i++) {
+        physical_address paddr = pmm_alloc(1);
+        virtual_address  hhdm  = hhdm_p2v(paddr);
+
+        usize offset   = i * MM_VIRT_PAGE_SIZE;
+        usize copy_len = arg_len - offset;
+        if (copy_len > MM_VIRT_PAGE_SIZE) copy_len = MM_VIRT_PAGE_SIZE;
+
+        memcpy(hhdm.ptr, (const u8 *)desc->entrypoint.arg + offset, copy_len);
+        if (copy_len < MM_VIRT_PAGE_SIZE) {
+          memset((u8 *)hhdm.ptr + copy_len, 0, MM_VIRT_PAGE_SIZE - copy_len);
+        }
+
+        virtual_address uva = { .addr = USER_ARG_BASE + i * MM_VIRT_PAGE_SIZE };
+        vmm_map(
+          self->pmap, uva, paddr,
+          MM_PT_FLAG_VALID | MM_PT_FLAG_USER | MM_PT_FLAG_NX,
+          MM_PAGE_4KB
+        );
+      }
+
+      user_arg = USER_ARG_BASE;
+    }
+
     u64 user_rsp = USER_STACK_TOP;
     u64 user_cs  = GDT_SEGMENT(GDT_SEG_IDX_UCODE) | RING3;
     u64 user_ss  = GDT_SEGMENT(GDT_SEG_IDX_UDATA) | RING3;
@@ -156,6 +188,7 @@ void task_init(task *self, const task_desc *desc) {
     *(--stack) = user_cs;
     *(--stack) = user_rsp;
     *(--stack) = (u64)desc->entrypoint.fn;
+    *(--stack) = user_arg;
     *(--stack) = (u64)task_usermode_trampoline;
 
     self->context.rip = (u64)task_usermode_trampoline;
@@ -182,6 +215,15 @@ void task_deinit(task *self) {
     task_mapping *next = m->next;
     deallocate(a, m, sizeof(task_mapping));
     m = next;
+  }
+
+  if ((self->flags & TH_TASK_FLAG_KERNEL) == 0) {
+    for (uptr addr = USER_ARG_BASE; ; addr += MM_VIRT_PAGE_SIZE) {
+      virtual_address va = { .addr = addr };
+      if (!vmm_is_mapped(self->pmap, va)) break;
+      physical_address pa = vmm_translate(self->pmap, va);
+      pmm_free(pa, 1);
+    }
   }
 
   vmm_destroy_page_map(self->pmap);

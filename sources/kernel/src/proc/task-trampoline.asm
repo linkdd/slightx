@@ -1,12 +1,12 @@
 [section .text]
 [bits 64]
 
-global task_entrypoint_trampoline
+global task_kernelmode_trampoline
 global task_usermode_trampoline
 extern thread_exit_from_task
 
 
-task_entrypoint_trampoline:
+task_kernelmode_trampoline:
   pop rax           ; fn
   pop rdi           ; arg
   call rax
@@ -18,6 +18,7 @@ task_entrypoint_trampoline:
 
 
 task_usermode_trampoline:
+  pop r15           ; arg
   pop rax           ; user_rip
   pop rbx           ; user_rsp
   pop rcx           ; user_cs
@@ -34,7 +35,7 @@ task_usermode_trampoline:
   xor rcx, rcx
   xor rdx, rdx
   xor rsi, rsi
-  xor rdi, rdi
+  mov rdi, r15      ; arg (System V ABI first argument)
   xor rbp, rbp
   xor r8, r8
   xor r9, r9

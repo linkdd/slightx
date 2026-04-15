@@ -140,7 +140,7 @@ void kmain(void) {
       module_response->modules[i]->address,
       module_response->modules[i]->size
     );
-    spawn_user_task(module);
+    spawn_user_task(module, module_response->modules[i]->string);
   }
 
   scheduler_yield    ();
