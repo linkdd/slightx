@@ -10,6 +10,7 @@ add_subdirectory(vendor)
 add_subdirectory(sources/klibc)
 add_subdirectory(sources/kernel)
 add_subdirectory(sources/ulibc)
+add_subdirectory(sources/libs)
 add_subdirectory(sources/apps)
 add_subdirectory(config)
 
