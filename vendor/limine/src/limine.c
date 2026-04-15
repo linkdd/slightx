@@ -29,7 +29,7 @@ LIMINE_REQ(module) = {
 
 LIMINE_REQ(framebuffer) = {
   .id       = LIMINE_FRAMEBUFFER_REQUEST_ID,
-  .revision = 0,
+  .revision = 6,
 };
 
 LIMINE_REQ(memmap) = {
@@ -39,24 +39,24 @@ LIMINE_REQ(memmap) = {
 
 LIMINE_REQ(paging_mode) = {
   .id       = LIMINE_PAGING_MODE_REQUEST_ID,
-  .revision = 0,
+  .revision = 6,
   .mode     = LIMINE_PAGING_MODE_X86_64_DEFAULT,
 };
 
 LIMINE_REQ(mp) = {
   .id       = LIMINE_MP_REQUEST_ID,
-  .revision = 0,
+  .revision = 6,
   .flags    = 1,
 };
 
 LIMINE_REQ(rsdp) = {
   .id       = LIMINE_RSDP_REQUEST_ID,
-  .revision = 0,
+  .revision = 6,
 };
 
 LIMINE_REQ(executable_address) = {
   .id       = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
-  .revision = 0,
+  .revision = 6,
 };
 
 

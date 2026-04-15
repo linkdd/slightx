@@ -3,7 +3,7 @@
 	url = https://github.com/Mintsuki/Flanterm
 [submodule "vendor/limine/bin"]
 	path = vendor/limine/bin
-	url = https://codeberg.org/Limine/Limine
+	url = https://github.com/limine-bootloader/limine
 [submodule "vendor/limine/protocol"]
 	path = vendor/limine/protocol
-	url = https://codeberg.org/Limine/limine-protocol
+	url = https://github.com/limine-bootloader/limine-protocol
