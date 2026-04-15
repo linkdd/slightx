@@ -32,4 +32,4 @@ str str_slice(str s, usize start, usize length);
 bool str_equal     (str a, str b);
 bool str_startswith(str s, str prefix);
 
-OPTION(usize) str_rfind(str s, char c);
+isize str_rfind(str s, char c);

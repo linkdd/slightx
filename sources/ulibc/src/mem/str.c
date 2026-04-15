@@ -133,12 +133,12 @@ bool str_startswith(str s, str prefix) {
 }
 
 
-OPTION(usize) str_rfind(str s, char c) {
+isize str_rfind(str s, char c) {
   for (usize i = s.length; i > 0; i--) {
     if (s.data[i - 1] == c) {
-      return (OPTION(usize)) SOME(i - 1);
+      return (isize)(i - 1);
     }
   }
 
-  return (OPTION(usize)) NONE();
+  return -1;
 }
