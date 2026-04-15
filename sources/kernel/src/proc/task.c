@@ -77,7 +77,6 @@ void task_init(task *self, const task_desc *desc) {
 
   self->state = (task_state){
     .type = TH_TASK_STATE_NEW,
-    .data = { .new = {} },
   };
 
   memset(&self->context, 0, sizeof(task_context));
@@ -207,7 +206,6 @@ void task_set_ready(task *self) {
 
   self->state = (task_state){
     .type = TH_TASK_STATE_READY,
-    .data = { .ready = {} },
   };
 }
 
@@ -231,7 +229,6 @@ void task_set_blocked(task *self) {
 
   self->state = (task_state){
     .type = TH_TASK_STATE_BLOCKED,
-    .data = { .blocked = {} },
   };
 }
 

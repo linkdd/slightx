@@ -54,17 +54,8 @@ typedef enum : u8 {
 typedef union task_state_data task_state_data;
 union task_state_data {
   struct {
-  } new;
-
-  struct {
-  } ready;
-
-  struct {
     usize processor_id;
   } running;
-
-  struct {
-  } blocked;
 
   struct {
     i32 exit_code;
