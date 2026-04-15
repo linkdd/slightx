@@ -39,7 +39,6 @@ void scheduler_load(void) {
   spinlock_acquire(&scheduler_lock);
   task_desc idle_task_desc = {
     .task_id     = next_task_id++,
-    .parent_task = NULL,
     .kstack_size = 16 * 1024,
     .ustack_size = 0,
     .entrypoint  = { .fn = idle_task_fn, .arg = NULL },

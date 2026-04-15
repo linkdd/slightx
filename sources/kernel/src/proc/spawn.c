@@ -22,7 +22,6 @@ tid spawn_kernel_task(task_entrypoint entrpoint) {
 
   task_desc desc = {
     .task_id     = scheduler_get_next_tid(),
-    .parent_task = NULL,
     .kstack_size = 16 * 1024,
     .ustack_size = 0,
     .entrypoint  = entrpoint,
@@ -66,7 +65,6 @@ tid spawn_user_task(const_span binary) {
 
   task_desc desc = {
     .task_id     = scheduler_get_next_tid(),
-    .parent_task = NULL,
     .kstack_size = 16 * 1024,
     .ustack_size = 16 * 1024,
     .entrypoint  = { .fn = (void (*)(void *))USER_CODE_BASE, .arg = NULL },

@@ -106,20 +106,8 @@ void task_init(task *self, const task_desc *desc) {
   }
 
   self->pmap = allocate(a, sizeof(page_map));
-  if (desc->parent_task != NULL) {
-    vmm_clone_page_map(self->pmap, desc->parent_task->pmap);
-
-    for (task_mapping *m = desc->parent_task->mappings; m != NULL; m = m->next) {
-      task_mapping *m_copy = task_add_mapping(self);
-      m_copy->vaddr        = m->vaddr;
-      m_copy->flags        = m->flags;
-      m_copy->page_count   = m->page_count;
-    }
-  }
-  else {
-    vmm_make_page_map(self->pmap);
-    self->mappings = NULL;
-  }
+  vmm_make_page_map(self->pmap);
+  self->mappings = NULL;
 
   // For user tasks, map the user stack into the task's address space
   if ((desc->flags & TH_TASK_FLAG_KERNEL) == 0) {
@@ -146,7 +134,6 @@ void task_init(task *self, const task_desc *desc) {
   self->scheduling.siblings.next     = NULL;
 
   waitqueue_init(&self->lifecycle.joiners);
-  self->lifecycle.parent = desc->parent_task;
   memset(&self->lifecycle.blocker, 0, sizeof(waitqueue_item));
 
   u64 stack_top  = (u64)self->kstack.base + self->kstack.size;

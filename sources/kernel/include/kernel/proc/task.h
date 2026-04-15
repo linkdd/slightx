@@ -36,7 +36,6 @@ typedef enum : u8 {
 typedef struct task_desc task_desc;
 struct task_desc {
   tid              task_id;
-  task            *parent_task;
   usize            kstack_size;
   usize            ustack_size;
   task_entrypoint  entrypoint;
@@ -133,7 +132,6 @@ struct task {
   struct {
     waitqueue_item  blocker;
     waitqueue       joiners;
-    task           *parent;
   } lifecycle;
 };
 
