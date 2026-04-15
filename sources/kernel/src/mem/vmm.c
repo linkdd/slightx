@@ -170,6 +170,25 @@ void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
   if (cur != NULL && (iframe->err_code & 0b100) != 0) {
     *cf = INTERRUPT_CONTROLFLOW_RETURN;
 
+    klog("\n=== SEGMENTATION FAULT ===");
+    klog(" TASK: %d", cur->id);
+    klog(" ADDRESS:   %x", iframe->cr2);
+    klog(" LOCATION:  %x", iframe->rip);
+    klog(" ERROR:     P=%d WR=%d US=%d RSVD=%d ID=%d PK=%d SS=%d",
+      (i64)((iframe->err_code >> 0) & 1),
+      (i64)((iframe->err_code >> 1) & 1),
+      (i64)((iframe->err_code >> 2) & 1),
+      (i64)((iframe->err_code >> 3) & 1),
+      (i64)((iframe->err_code >> 4) & 1),
+      (i64)((iframe->err_code >> 5) & 1),
+      (i64)((iframe->err_code >> 6) & 1)
+    );
+    klog(" REGISTERS:");
+    klog("  CR0[%x]",    iframe->cr0);
+    klog("  CR3[%x]",    iframe->cr3);
+    klog("  CR4[%x]",    iframe->cr4);
+    klog("  RFLAGS[%x]", iframe->rflags);
+
     scheduler_kill_current_task(TASK_EXIT_FAIL_SEGFAULT);
   }
   else {
