@@ -23,5 +23,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/dummy.bin
-  DESTINATION initrd/apps
+  DESTINATION iso/apps
 )

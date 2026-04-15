@@ -17,13 +17,6 @@ install(CODE "
   execute_process(
     COMMAND ${CMAKE_COMMAND}
       -DSYSROOT=${SYSROOT}
-      -P
-      ${CMAKE_CURRENT_LIST_DIR}/build/scripts/mkinitrd.cmake
-  )
-
-  execute_process(
-    COMMAND ${CMAKE_COMMAND}
-      -DSYSROOT=${SYSROOT}
       -DDISTDIR=${DISTDIR}
       -DLIMINE_BIN=$<TARGET_FILE:limine-deploy>
       -P

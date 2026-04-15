@@ -5,8 +5,3 @@ install(
   FILES limine.conf
   DESTINATION iso/boot
 )
-
-install(
-  FILES boot.conf
-  DESTINATION initrd
-)

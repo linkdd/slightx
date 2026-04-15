@@ -8,7 +8,6 @@
 #include <kernel/halt.h>
 
 #include <kernel/drivers/console.h>
-#include <kernel/drivers/initrd.h>
 
 #include <kernel/boot/gdt.h>
 #include <kernel/boot/idt.h>
@@ -33,8 +32,6 @@
 #include <kernel/proc/syscall.h>
 
 #include <kernel/vfs/main.h>
-
-#include <kernel/args.h>
 
 
 static void init_static_globals(void) {
@@ -126,40 +123,27 @@ void kmain(void) {
   LIMINE_GET_RESP(executable_file);
   assert_release(executable_file_response != NULL);
   klog(
-    "kernel: %s %s",
+    "# %s %s",
     strview_from_cstr(executable_file_response->executable_file->path),
     strview_from_cstr(executable_file_response->executable_file->string)
   );
-
-  auto args = args_parse(strview_from_cstr(executable_file_response->executable_file->string));
-  if (!args.is_ok) {
-    panic("invalid kernel command line");
-  }
 
   LIMINE_GET_RESP(module);
   assert_release(module_response != NULL);
   assert_release(module_response->module_count > 0);
 
-  klog(
-    "initrd: %s %s",
-    strview_from_cstr(module_response->modules[0]->path),
-    strview_from_cstr(module_response->modules[0]->string)
-  );
+  for (usize i = 0; i < module_response->module_count; i++) {
+    klog(
+      "# %s %s",
+      strview_from_cstr(module_response->modules[i]->path),
+      strview_from_cstr(module_response->modules[i]->string)
+    );
 
-  initrd ramdisk = {};
-  initrd_load(&ramdisk, make_const_span(
-    module_response->modules[0]->address,
-    module_response->modules[0]->size
-  ));
-
-  auto mount = vfs_mount(str_literal("/"), initrd_root(&ramdisk));
-  if (!mount.is_ok) {
-    panic("mount(initrd): %s", vfs_strerror(mount.err));
-  }
-
-  auto spawn = spawn_executable(args.ok.rdinit);
-  if (!spawn.is_ok) {
-    panic("spawn(rdinit): %s", spawn.err);
+    const_span module = make_const_span(
+      module_response->modules[i]->address,
+      module_response->modules[i]->size
+    );
+    spawn_user_task(module);
   }
 
   scheduler_yield    ();
