@@ -11,7 +11,7 @@
   __asm__ volatile("cli");
   lapic_send_panic_ipi();
 
-  klog("!!! KERNEL PANIC !!!\n");
+  klog("!!! KERNEL PANIC !!!\r\n");
 
   va_start(ap, fmt);
   vklog(fmt, ap);

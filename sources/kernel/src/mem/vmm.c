@@ -170,7 +170,7 @@ void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
   if (cur != NULL && (iframe->err_code & 0b100) != 0) {
     *cf = INTERRUPT_CONTROLFLOW_RETURN;
 
-    klog("\n=== SEGMENTATION FAULT ===");
+    klog("\r\n=== SEGMENTATION FAULT ===");
     klog(" TASK: %d", cur->id);
     klog(" ADDRESS:   %x", iframe->cr2);
     klog(" LOCATION:  %x", iframe->rip);

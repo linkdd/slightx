@@ -41,7 +41,7 @@ void vklog(const char *fmt, va_list ap) {
 
   formatter_apply_v(&f, fmt, ap);
 
-  console_write(str_literal("\n"));
+  console_write(str_literal("\r\n"));
 
   spinlock_release(&log_lock);
 }

@@ -21,7 +21,7 @@
       sys_puts(str_literal(                                                    \
         "Assertion failed: " #cond ", "                                        \
         "file " __FILE__ ", line " _assert_stringify(__LINE__)                 \
-        "\n"                                                                   \
+        "\r\n"                                                                   \
       ));                                                                      \
       sys_exit(127);                                                           \
     }                                                                          \

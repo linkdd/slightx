@@ -19,7 +19,7 @@
   do {                                                                         \
     if (!(cond)) {                                                             \
       panic(                                                                   \
-        "Assertion failed: %s, file %s, line %d\n",                            \
+        "Assertion failed: %s, file %s, line %d\r\n",                            \
         str_literal(#cond), str_literal(__FILE__), __LINE__                    \
       );                                                                       \
     }                                                                          \

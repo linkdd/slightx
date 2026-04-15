@@ -7,6 +7,6 @@
   if (arg != NULL) {
     sys_puts(strview_from_cstr(arg));
   }
-  sys_puts(str_literal("\n"));
+  sys_puts(str_literal("\r\n"));
   sys_exit(0);
 }
