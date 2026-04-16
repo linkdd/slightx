@@ -11,6 +11,10 @@ typedef enum : u64 {
   SYSC_MMAP,
   SYSC_MUNMAP,
 
+  SYSC_SEND,
+  SYSC_CALL,
+  SYSC_CAPCTL,
+
   SYSC_PUTS,
 
   SYSC__COUNT,

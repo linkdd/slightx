@@ -10,8 +10,6 @@
 #include <kernel/proc/spawn.h>
 #include <kernel/proc/task.h>
 
-#include <kernel/drivers/console.h>
-
 
 extern void syscall_entry_stub(void);
 
@@ -68,14 +66,55 @@ static i64 sysc_munmap(syscall_frame *frame) {
 }
 
 
-static i64 sysc_puts(syscall_frame *frame) {
-  char  *buf = (char*)frame->rdi;
-  usize  len = (usize)frame->rsi;
+static i64 sysc_send(syscall_frame *frame) {
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
 
-  str s = { .data = buf, .length = len };
-  console_write(s);
+  cap_id      cap  = (cap_id)     frame->rdi;
+  const void *data = (const void*)frame->rsi;
+  usize       len  = (usize)      frame->rdx;
 
-  return (i64)len;
+  const_span msg = make_const_span(data, len);
+
+  cap_obj *obj = cap_table_get(&cur->capabilities, cap, CAP_RIGHT_SEND);
+  if (obj == NULL || obj->ops->send == NULL) return -1;
+
+  return obj->ops->send(obj, msg);
+}
+
+
+static i64 sysc_call(syscall_frame *frame) {
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
+
+  cap_id      cap       = (cap_id)     frame->rdi;
+  const void *req_data  = (const void*)frame->rsi;
+  usize       req_len   = (usize)      frame->rdx;
+  void       *resp_data = (void*)      frame->r10;
+  usize       resp_len  = (usize)      frame->r8;
+
+  const_span req  = make_const_span(req_data,  req_len);
+  span       resp = make_span      (resp_data, resp_len);
+
+  cap_obj *obj = cap_table_get(&cur->capabilities, cap, CAP_RIGHT_CALL);
+  if (obj == NULL || obj->ops->call == NULL) return -1;
+
+  return obj->ops->call(obj, req, resp);
+}
+
+
+static i64 sysc_capctl(syscall_frame *frame) {
+  percpu_data *cpu = mp_get_percpu_data();
+  task        *cur = cpu->scheduler.current;
+
+  cap_id cap = (cap_id)frame->rdi;
+  u64    cmd = (u64)   frame->rsi;
+  uptr   arg = (uptr)  frame->rdx;
+
+  cap_obj *obj = cap_table_get(&cur->capabilities, cap, CAP_RIGHT_CTL);
+  if (obj == NULL || obj->ops->ctl == NULL) return -1;
+
+  return obj->ops->ctl(obj, cmd, arg);
 }
 
 
@@ -89,7 +128,9 @@ static syscall_fn syscall_table[SYSC__COUNT] = {
   [SYSC_MMAP]   = sysc_mmap,
   [SYSC_MUNMAP] = sysc_munmap,
 
-  [SYSC_PUTS]   = sysc_puts,
+  [SYSC_SEND]   = sysc_send,
+  [SYSC_CALL]   = sysc_call,
+  [SYSC_CAPCTL] = sysc_capctl,
 };
 
 

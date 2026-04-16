@@ -7,6 +7,7 @@
 #include <klibc/mem/str.h>
 
 #include <kernel/mem/vmm.h>
+#include <kernel/proc/capabilities.h>
 
 
 #define TASK_EXIT_SUCCESS         ( 0)
@@ -116,6 +117,8 @@ struct task {
 
   u32 uid;
   u32 gid;
+
+  cap_table capabilities;
 
   task_context context;
   task_stack   kstack;

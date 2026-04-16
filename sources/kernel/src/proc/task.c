@@ -117,6 +117,7 @@ void task_init(task *self, const task_desc *desc) {
 
   memset(&self->context, 0, sizeof(task_context));
 
+  // MARK: kernel stack
   usize kstack_size = desc->kstack_size;
   if ((desc->flags & TH_TASK_FLAG_GUARDPAGE) != 0) {
     kstack_size += MM_VIRT_PAGE_SIZE;
@@ -129,6 +130,7 @@ void task_init(task *self, const task_desc *desc) {
     : self->kstack.base
   );
 
+  // MARK: user stack
   if ((desc->flags & TH_TASK_FLAG_KERNEL) != 0) {
     self->ustack.size  = 0;
     self->ustack.base  = NULL;
@@ -140,6 +142,7 @@ void task_init(task *self, const task_desc *desc) {
     self->ustack.limit = self->ustack.base;
   }
 
+  // MARK: vmem
   self->pmap = allocate(a, sizeof(page_map));
   vmm_make_page_map(self->pmap);
   self->mappings = NULL;
@@ -171,6 +174,12 @@ void task_init(task *self, const task_desc *desc) {
   waitqueue_init(&self->lifecycle.joiners);
   memset(&self->lifecycle.blocker, 0, sizeof(waitqueue_item));
 
+  // MARK: capabilities
+
+  cap_table_init(&self->capabilities, a, 16);
+
+
+  // MARK: context
   u64 stack_top  = (u64)self->kstack.base + self->kstack.size;
   stack_top     &= ~0xFULL; // Align to 16 bytes
 
@@ -305,6 +314,8 @@ void task_deinit(task *self) {
   assert(self != NULL);
 
   allocator a = heap_allocator();
+
+  cap_table_deinit(&self->capabilities);
 
   task_mapping *m = self->mappings;
   while (m != NULL) {

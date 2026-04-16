@@ -13,7 +13,6 @@ static volatile task_startup_info *g_info = NULL;
 [[noreturn]] [[gnu::section(".text.boot")]] void _start(task_startup_info *info) {
   assert(info != NULL);
   g_info = info;
-  assert(g_info != NULL);
   sys_exit(main());
 }
 
