@@ -6,7 +6,7 @@ SYSROOT = $(ROOTDIR)/sysroot/$(BUILD_TYPE)
 DISTDIR = $(ROOTDIR)/dist/$(BUILD_TYPE)
 
 VM = qemu-system-x86_64
-VMFLAGS = -cdrom $(DISTDIR)/slightx.iso -m 512M -smp cpus=4
+VMFLAGS = -cdrom $(DISTDIR)/slightx.iso -m 512M -smp cpus=4 -serial stdio
 
 CMAKE = cmake
 CMAKEFLAGS =                        \

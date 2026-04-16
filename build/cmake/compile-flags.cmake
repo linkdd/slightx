@@ -61,6 +61,6 @@ set(USERLAND_LD_FLAGS
 )
 
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-  set(KERNEL_C_FLAGS   -g ${KERNEL_C_FLAGS})
-  set(USERLAND_C_FLAGS -g ${USERLAND_C_FLAGS})
+  set(KERNEL_C_FLAGS   -g -fsanitize=undefined ${KERNEL_C_FLAGS} -DCONFIG_UBSAN_ALWAYS_ABORT=1)
+  set(USERLAND_C_FLAGS -g -fsanitize=undefined ${USERLAND_C_FLAGS})
 endif()
