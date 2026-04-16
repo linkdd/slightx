@@ -6,7 +6,6 @@ SECTIONS
   . = 0x400000;
 
   .text : ALIGN(16) {
-    _start = .;
     *(.text.boot)
     *(.text*)
   }
