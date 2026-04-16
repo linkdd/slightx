@@ -76,6 +76,8 @@ void console_write(str s) {
   if (ft_ctx != NULL) {
     flanterm_write(ft_ctx, s.data, s.length);
   }
+#ifdef DEBUG
   serial_puts(s);
+#endif
   spinlock_release(&console_lock);
 }
