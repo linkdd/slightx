@@ -142,3 +142,60 @@ isize str_rfind(str s, char c) {
 
   return -1;
 }
+
+
+strv str_split(allocator a, str s, str delimiter) {
+  strv result = {
+    .items = NULL,
+    .count = 0,
+  };
+
+  if (delimiter.length == 0) {
+    return result;
+  }
+
+  usize start = 0;
+
+  for (usize i = 0; i + delimiter.length <= s.length; i++) {
+    if (memcmp(s.data + i, delimiter.data, delimiter.length) == 0) {
+      str item = str_slice(s, start, i - start);
+
+      result.count++;
+      if (result.items == NULL) {
+        result.items = allocate_v(a, 1, sizeof(str));
+      }
+      else {
+        result.items = reallocate(a, result.items, (result.count - 1) * sizeof(str), result.count * sizeof(str));
+      }
+      result.items[result.count - 1] = item;
+
+      start = i + delimiter.length;
+    }
+  }
+
+  if (start <= s.length) {
+    str item = str_slice(s, start, s.length - start);
+
+    result.count++;
+    if (result.items == NULL) {
+      result.items = allocate_v(a, 1, sizeof(str));
+    }
+    else {
+      result.items = reallocate(a, result.items, (result.count - 1) * sizeof(str), result.count * sizeof(str));
+    }
+    result.items[result.count - 1] = item;
+  }
+
+  return result;
+}
+
+
+void strv_free(allocator a, strv *sv) {
+  for (usize i = 0; i < sv->count; i++) {
+    str_free(a, &sv->items[i]);
+  }
+
+  deallocate(a, sv->items, sv->count * sizeof(str));
+
+  memset(sv, 0, sizeof(strv));
+}

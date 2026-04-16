@@ -12,6 +12,12 @@ struct str {
   bool   owned;
 };
 
+typedef struct strv strv;
+struct strv {
+  str   *items;
+  usize  count;
+};
+
 
 #define str_char(c)     (str){ .data = &(c),   .length = 1,             .capacity = 1,             .owned = false }
 #define str_literal(s)  (str){ .data = ("" s), .length = sizeof(s) - 1, .capacity = sizeof(s) - 1, .owned = false }
@@ -33,3 +39,6 @@ bool str_equal     (str a, str b);
 bool str_startswith(str s, str prefix);
 
 isize str_rfind(str s, char c);
+
+strv str_split(allocator a, str s, str delimiter);
+void strv_free(allocator a, strv *sv);
