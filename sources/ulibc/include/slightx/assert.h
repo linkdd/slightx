@@ -8,7 +8,8 @@
 #undef assert
 #endif
 
-#define _assert_stringify(x)  #x
+#define _assert_stringify(x)       _assert_stringify_impl(x)
+#define _assert_stringify_impl(x)  #x
 
 #define _assert_disabled(cond)                                                 \
   do {                                                                         \
@@ -21,7 +22,7 @@
       sys_puts(str_literal(                                                    \
         "Assertion failed: " #cond ", "                                        \
         "file " __FILE__ ", line " _assert_stringify(__LINE__)                 \
-        "\r\n"                                                                   \
+        "\r\n"                                                                 \
       ));                                                                      \
       sys_exit(127);                                                           \
     }                                                                          \
