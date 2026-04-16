@@ -82,7 +82,7 @@ tid spawn_user_task(const_span binary, const task_user_startup_info *startup_inf
     virtual_address bin_page_vaddr = { .addr = USER_CODE_BASE + i * MM_VIRT_PAGE_SIZE };
     vmm_map(
       t->pmap, bin_page_vaddr, bin_page_paddrs[i],
-      MM_PT_FLAG_VALID | MM_PT_FLAG_USER,
+      MM_PT_FLAG_VALID | MM_PT_FLAG_WRITE | MM_PT_FLAG_USER,
       MM_PAGE_4KB
     );
   }
