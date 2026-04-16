@@ -204,6 +204,7 @@ lapic_spurious_stub:
   push qword 0xFF
   jmp isr_common_stub
 
+align 8
 exc_stub_table:
 %assign i 0
 %rep    32
@@ -211,6 +212,7 @@ exc_stub_table:
 %assign i i+1
 %endrep
 
+align 8
 irq_stub_table:
 %assign i 0
 %rep 16
