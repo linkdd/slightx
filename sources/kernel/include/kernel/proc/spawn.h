@@ -11,4 +11,4 @@
 
 
 tid spawn_kernel_task(task_entrypoint entrypoint);
-tid spawn_user_task  (const_span binary, const char *arg);
+tid spawn_user_task  (const_span binary, const task_user_startup_info *startup_info);

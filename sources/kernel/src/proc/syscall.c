@@ -26,13 +26,12 @@ static i64 sysc_exit(syscall_frame *frame) {
 
 
 static i64 sysc_spawn(syscall_frame *frame) {
-  const void *data = (const void*)frame->rdi;
-  usize       len  = (usize)      frame->rsi;
-  const char *arg  = (const char*)frame->rdx;
+  const void                   *data = (const void*)                   frame->rdi;
+  usize                         len   = (usize)                        frame->rsi;
+  const task_user_startup_info *info  = (const task_user_startup_info*)frame->rdx;
 
   const_span binary = make_const_span(data, len);
-
-  return (i64)spawn_user_task(binary, arg);
+  return (i64)spawn_user_task(binary, info);
 }
 
 

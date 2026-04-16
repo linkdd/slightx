@@ -139,7 +139,16 @@ void kmain(void) {
       module_response->modules[i]->address,
       module_response->modules[i]->size
     );
-    spawn_user_task(module, module_response->modules[i]->string);
+
+    task_user_startup_info info = {
+      .args    = str_split(heap_allocator(), strview_from_cstr(module_response->modules[i]->string), str_literal(" ")),
+      .envvars = {}
+    };
+
+    spawn_user_task(module, &info);
+
+    strv_free(heap_allocator(), &info.args);
+    strv_free(heap_allocator(), &info.envvars);
   }
 
   scheduler_yield    ();

@@ -1,5 +1,6 @@
 #include <klibc/assert.h>
 #include <klibc/mem/align.h>
+#include <klibc/mem/arena.h>
 #include <klibc/mem/bytes.h>
 
 #include <kernel/proc/task.h>
@@ -16,11 +17,37 @@
 extern void task_kernelmode_trampoline(void);
 extern void task_usermode_trampoline  (void);
 
-#define USER_STACK_TOP   0x00007FFFFFFFE000ULL
-#define USER_ARG_BASE    0x00007FFFFF000000ULL
+#define USER_STACK_TOP      0x00007FFFFFFFE000ULL
+#define USER_STARTUP_BASE   0x00007FFFFF000000ULL
 
 
-static task_mapping *task_add_mapping(task *self) {
+usize task_user_startup_info__get_size(const task_user_startup_info *info) {
+  const usize align = alignof(max_align_t);
+
+  usize total = align_size_up(sizeof(task_user_startup_info), align);
+  total += align_size_up(info->args   .count * sizeof(str), align);
+  total += align_size_up(info->envvars.count * sizeof(str), align);
+
+  for (usize i = 0; i < info->args.count; i++) {
+    total += align_size_up(info->args.items[i].length * sizeof(char), align);
+  }
+
+  for (usize i = 0; i < info->envvars.count; i++) {
+    total += align_size_up(info->envvars.items[i].length * sizeof(char), align);
+  }
+
+  return total;
+}
+
+
+static inline virtual_address task_vaddr_to_kernel_vaddr(page_map *task_pmap, virtual_address task_vaddr) {
+  return hhdm_p2v(vmm_translate(task_pmap, task_vaddr));
+}
+
+
+// MARK: - mappings
+
+static task_mapping *task__add_mapping(task *self) {
   assert(self != NULL);
 
   task_mapping *mapping = allocate(heap_allocator(), sizeof(task_mapping));
@@ -36,7 +63,7 @@ static task_mapping *task_add_mapping(task *self) {
 }
 
 
-static bool task_mapping_overlaps(task *self, uptr base, usize length) {
+static bool task__mapping_overlaps(task *self, uptr base, usize length) {
   assert(self != NULL);
 
   uptr end = base + length;
@@ -54,7 +81,7 @@ static bool task_mapping_overlaps(task *self, uptr base, usize length) {
 }
 
 
-static void task_del_mapping(task *self, task_mapping *mapping) {
+static void task__del_mapping(task *self, task_mapping *mapping) {
   assert(self != NULL);
   assert(mapping != NULL);
 
@@ -65,6 +92,8 @@ static void task_del_mapping(task *self, task_mapping *mapping) {
   deallocate(heap_allocator(), mapping, sizeof(task_mapping));
 }
 
+
+// MARK: - init
 
 void task_init(task *self, const task_desc *desc) {
   assert(self != NULL);
@@ -155,34 +184,94 @@ void task_init(task *self, const task_desc *desc) {
     self->context.rip = (u64)task_kernelmode_trampoline;
   }
   else {
-    u64 user_arg = 0;
+    // For user tasks, we must copy the startup data structure into the
+    // task's address space
+    u64 user_startup_info_addr = 0;
 
     if (desc->entrypoint.arg != NULL) {
-      usize arg_len    = strlen((const char *)desc->entrypoint.arg) + 1;
-      usize page_count = align_size_up(arg_len, MM_VIRT_PAGE_SIZE) / MM_VIRT_PAGE_SIZE;
+      const task_user_startup_info *desc_startup_info = (const task_user_startup_info *) desc->entrypoint.arg;
+
+      usize reqsz      = task_user_startup_info__get_size(desc_startup_info);
+      usize page_count = align_size_up(reqsz, MM_VIRT_PAGE_SIZE) / MM_VIRT_PAGE_SIZE;
 
       for (usize i = 0; i < page_count; i++) {
         physical_address paddr = pmm_alloc(1);
-        virtual_address  hhdm  = hhdm_p2v(paddr);
+        virtual_address  vaddr = { .addr = USER_STARTUP_BASE + i * MM_VIRT_PAGE_SIZE };
 
-        usize offset   = i * MM_VIRT_PAGE_SIZE;
-        usize copy_len = arg_len - offset;
-        if (copy_len > MM_VIRT_PAGE_SIZE) copy_len = MM_VIRT_PAGE_SIZE;
+        memset(hhdm_p2v(paddr).ptr, 0, MM_VIRT_PAGE_SIZE);
 
-        memcpy(hhdm.ptr, (const u8 *)desc->entrypoint.arg + offset, copy_len);
-        if (copy_len < MM_VIRT_PAGE_SIZE) {
-          memset((u8 *)hhdm.ptr + copy_len, 0, MM_VIRT_PAGE_SIZE - copy_len);
-        }
-
-        virtual_address uva = { .addr = USER_ARG_BASE + i * MM_VIRT_PAGE_SIZE };
         vmm_map(
-          self->pmap, uva, paddr,
+          self->pmap, vaddr, paddr,
           MM_PT_FLAG_VALID | MM_PT_FLAG_USER | MM_PT_FLAG_NX,
           MM_PAGE_4KB
         );
       }
 
-      user_arg = USER_ARG_BASE;
+      user_startup_info_addr = USER_STARTUP_BASE;
+
+      // Use the arena to track layout in user VA space. We must NOT use
+      // allocate()/allocate_v() here because they memset through the
+      // returned pointer, which is a user VA not mapped in the kernel
+      // page map.  Instead, call the raw arena bump and write through
+      // the HHDM-translated kernel VA (pages are pre-zeroed above).
+      arena tmp = {};
+      arena_init(&tmp, make_span((void *)user_startup_info_addr, reqsz));
+      allocator a = arena_allocator(&tmp);
+
+      task_user_startup_info *startup_info = task_vaddr_to_kernel_vaddr(
+        self->pmap,
+        (virtual_address){ .ptr = a.allocate(a.udata, sizeof(task_user_startup_info)) }
+      ).ptr;
+
+      startup_info->args.count = desc_startup_info->args.count;
+      startup_info->args.items = a.allocate(a.udata, desc_startup_info->args.count * sizeof(str));
+
+      startup_info->envvars.count = desc_startup_info->envvars.count;
+      startup_info->envvars.items = a.allocate(a.udata, desc_startup_info->envvars.count * sizeof(str));
+
+      str *argsp = task_vaddr_to_kernel_vaddr(
+        self->pmap,
+        (virtual_address){ .ptr = startup_info->args.items }
+      ).ptr;
+
+      for (usize i = 0; i < desc_startup_info->args.count; i++) {
+        str *desc_arg = &desc_startup_info->args.items[i];
+        str *arg      = &argsp[i];
+
+        arg->capacity = desc_arg->length;
+        arg->length   = desc_arg->length;
+        arg->owned    = true;
+        arg->data     = a.allocate(a.udata, desc_arg->length * sizeof(char));
+
+        char *datap = task_vaddr_to_kernel_vaddr(
+          self->pmap,
+          (virtual_address){ .ptr = arg->data }
+        ).ptr;
+
+        memcpy(datap, desc_arg->data, arg->length * sizeof(char));
+      }
+
+      str *envp = task_vaddr_to_kernel_vaddr(
+        self->pmap,
+        (virtual_address){ .ptr = startup_info->envvars.items }
+      ).ptr;
+
+      for (usize i = 0; i < desc_startup_info->envvars.count; i++) {
+        str *desc_env = &desc_startup_info->envvars.items[i];
+        str *env      = &envp[i];
+
+        env->capacity = desc_env->length;
+        env->length   = desc_env->length;
+        env->owned    = true;
+        env->data     = a.allocate(a.udata, desc_env->length * sizeof(char));
+
+        char *datap = task_vaddr_to_kernel_vaddr(
+          self->pmap,
+          (virtual_address){ .ptr = env->data }
+        ).ptr;
+
+        memcpy(datap, desc_env->data, env->length * sizeof(char));
+      }
     }
 
     u64 user_rsp = USER_STACK_TOP;
@@ -193,7 +282,7 @@ void task_init(task *self, const task_desc *desc) {
     *(--stack) = user_cs;
     *(--stack) = user_rsp;
     *(--stack) = (u64)desc->entrypoint.fn;
-    *(--stack) = user_arg;
+    *(--stack) = user_startup_info_addr;
     *(--stack) = (u64)task_usermode_trampoline;
 
     self->context.rip = (u64)task_usermode_trampoline;
@@ -209,6 +298,8 @@ void task_init(task *self, const task_desc *desc) {
   self->context.rflags = 0x202; // Enable interrupts
 }
 
+
+// MARK: - deinit
 
 void task_deinit(task *self) {
   assert(self != NULL);
@@ -238,6 +329,8 @@ void task_deinit(task *self) {
   memset(self, 0, sizeof(task));
 }
 
+
+// MARK: - lifecycle
 
 void task_set_ready(task *self) {
   assert(self != NULL);
@@ -283,6 +376,8 @@ void task_set_zombie(task *self, i32 exit_code) {
 }
 
 
+// MARK: - memory
+
 void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
   assert(self != NULL);
 
@@ -294,7 +389,7 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
     if (
       addr == NULL                                    ||
       !is_ptr_aligned((uptr)addr, MM_VIRT_PAGE_SIZE)  ||
-      task_mapping_overlaps(self, (uptr)addr, length)
+      task__mapping_overlaps(self, (uptr)addr, length)
     ) {
       return NULL;
     }
@@ -306,7 +401,7 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
     bool found = false;
 
     for (uptr candidate = search_base; candidate + length < search_limit; candidate += MM_VIRT_PAGE_SIZE) {
-      if (!task_mapping_overlaps(self, candidate, length)) {
+      if (!task__mapping_overlaps(self, candidate, length)) {
         addr  = (void *)candidate;
         found = true;
         break;
@@ -349,7 +444,7 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
     }
   }
 
-  task_mapping *mapping = task_add_mapping(self);
+  task_mapping *mapping = task__add_mapping(self);
   mapping->vaddr.ptr    = addr;
   mapping->flags        = flags;
   mapping->page_count   = page_count;
@@ -382,12 +477,14 @@ void task_munmap(task *self, void *addr, usize length) {
         }
       }
 
-      task_del_mapping(self, m);
+      task__del_mapping(self, m);
       return;
     }
   }
 }
 
+
+// MARK: - APIs
 
 tid task_current_id(void) {
   task *current_task = scheduler_get_current_task();

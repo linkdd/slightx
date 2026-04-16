@@ -17,13 +17,14 @@
 }
 
 
-u32 sys_spawn(const_span binary) {
+u32 sys_spawn(const_span binary, const task_startup_info *info) {
   __asm__ volatile (
     "syscall"
     :
     : "a" ((u64)SYSC_SPAWN),
       "D" ((u64)binary.data),
-      "S" ((u64)binary.size)
+      "S" ((u64)binary.size),
+      "d" ((u64)info)
     : "rcx", "r11", "memory"
   );
 

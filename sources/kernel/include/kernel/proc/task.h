@@ -3,6 +3,8 @@
 #include <klibc/types.h>
 
 #include <klibc/sync/waitqueue.h>
+#include <klibc/mem/alloc.h>
+#include <klibc/mem/str.h>
 
 #include <kernel/mem/vmm.h>
 
@@ -19,6 +21,12 @@ typedef struct task_entrypoint task_entrypoint;
 struct task_entrypoint {
   void (*fn)(void *arg);
   void *arg;
+};
+
+typedef struct task_user_startup_info task_user_startup_info;
+struct task_user_startup_info {
+  strv  args;
+  strv  envvars;
 };
 
 typedef struct task_pin task_pin;
