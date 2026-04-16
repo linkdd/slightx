@@ -192,7 +192,10 @@ strv str_split(allocator a, str s, str delimiter) {
 
 void strv_free(allocator a, strv *sv) {
   for (usize i = 0; i < sv->count; i++) {
-    str_free(a, &sv->items[i]);
+    str *item = &sv->items[i];
+    if (item->owned) {
+      str_free(a, &sv->items[i]);
+    }
   }
 
   deallocate(a, sv->items, sv->count * sizeof(str));
