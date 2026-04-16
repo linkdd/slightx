@@ -1,3 +1,5 @@
+#ifdef DEBUG
+
 #include <slightx/assert.h>
 
 #include <slightx/mem/bytes.h>
@@ -645,3 +647,5 @@ void __ubsan_handle_function_type_mismatch_abort(function_type_mismatch_info *in
   __ubsan_handle_function_type_mismatch(info, func_ptr);
   report_abort();
 }
+
+#endif
