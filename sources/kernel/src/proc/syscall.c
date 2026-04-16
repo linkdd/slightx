@@ -7,8 +7,8 @@
 #include <kernel/cpu/mp.h>
 
 #include <kernel/proc/syscall.h>
-#include <kernel/proc/thread.h>
 #include <kernel/proc/spawn.h>
+#include <kernel/proc/task.h>
 
 #include <kernel/drivers/console.h>
 
@@ -20,7 +20,7 @@ extern void syscall_entry_stub(void);
 
 static i64 sysc_exit(syscall_frame *frame) {
   i32 exit_code = (i32)frame->rdi;
-  thread_exit_from_task(exit_code);
+  task_exit(exit_code);
   unreachable();
 }
 
@@ -37,7 +37,7 @@ static i64 sysc_spawn(syscall_frame *frame) {
 
 
 static i64 sysc_join(syscall_frame *frame) {
-  thread_join((tid)frame->rdi);
+  task_join((tid)frame->rdi);
   return 0;
 }
 

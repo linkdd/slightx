@@ -3,7 +3,7 @@
 
 global task_kernelmode_trampoline
 global task_usermode_trampoline
-extern thread_exit_from_task
+extern task_exit
 
 
 task_kernelmode_trampoline:
@@ -12,7 +12,7 @@ task_kernelmode_trampoline:
   call rax
 
   xor edi, edi
-  call thread_exit_from_task
+  call task_exit
 
   ud2 ; unreachable
 

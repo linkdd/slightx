@@ -151,3 +151,11 @@ extern void task_context_switch(task_context *prev, task_context *next);
 
 void *task_mmap  (task *self, void *addr, usize length, task_mmap_flags flags);
 void  task_munmap(task *self, void *addr, usize length);
+
+
+tid task_current_id(void);
+
+void task_sleep(u64 ns);
+void task_join (tid tid);
+
+[[noreturn]] void task_exit(i32 exit_code);

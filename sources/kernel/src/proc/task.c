@@ -3,10 +3,13 @@
 #include <klibc/mem/bytes.h>
 
 #include <kernel/proc/task.h>
+#include <kernel/proc/scheduler/controller.h>
+
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
 #include <kernel/mem/heap.h>
 #include <kernel/mem/hhdm.h>
+
 #include <kernel/boot/gdt.h>
 
 
@@ -383,4 +386,65 @@ void task_munmap(task *self, void *addr, usize length) {
       return;
     }
   }
+}
+
+
+tid task_current_id(void) {
+  task *current_task = scheduler_get_current_task();
+  assert(current_task != NULL);
+
+  return current_task->id;
+}
+
+
+void task_sleep(u64 ns) {
+  task *current_task = scheduler_get_current_task();
+  assert(current_task != NULL);
+
+  waitqueue_item_init(
+    &current_task->lifecycle.blocker,
+    scheduler_make_waiter(current_task)
+  );
+
+  __asm__ volatile("cli" ::: "memory");
+  scheduler_wakeup_after(ns, &current_task->lifecycle.blocker);
+  task_set_blocked      (current_task);
+  scheduler_yield       ();
+  __asm__ volatile("sti" ::: "memory");
+}
+
+
+void task_join(tid tid) {
+  task *current_task = scheduler_get_current_task();
+  assert(current_task != NULL);
+
+  task *target_task = scheduler_get_task_by_id(tid);
+  assert(target_task != NULL);
+
+  assert_release((target_task->flags & TH_TASK_FLAG_DETACHED) == 0);
+
+  if (target_task->state.type == TH_TASK_STATE_ZOMBIE) {
+    return;
+  }
+
+  waitqueue_item_init(
+    &current_task->lifecycle.blocker,
+    scheduler_make_waiter(current_task)
+  );
+
+  waitqueue_add(
+    &target_task->lifecycle.joiners,
+    &current_task->lifecycle.blocker
+  );
+
+  __asm__ volatile("cli" ::: "memory");
+  task_set_blocked(current_task);
+  scheduler_yield ();
+  __asm__ volatile("sti" ::: "memory");
+}
+
+
+[[noreturn]] void task_exit(i32 exit_code) {
+  scheduler_kill_current_task(exit_code);
+  unreachable();
 }
