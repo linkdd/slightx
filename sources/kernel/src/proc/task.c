@@ -5,6 +5,8 @@
 
 #include <kernel/proc/task.h>
 #include <kernel/proc/scheduler/controller.h>
+#include <kernel/proc/capabilities/console.h>
+#include <kernel/proc/abi.h>
 
 #include <kernel/mem/pmm.h>
 #include <kernel/mem/vmm.h>
@@ -178,6 +180,14 @@ void task_init(task *self, const task_desc *desc) {
 
   cap_table_init(&self->capabilities, a, 16);
 
+  cap_obj *console = make_console_cap(a);
+  assert(CONSOLE_CAP_ID == cap_table_add(
+    &self->capabilities,
+    console,
+    CAP_RIGHT_SEND,
+    0
+  ));
+  cap_obj_decref(console);
 
   // MARK: context
   u64 stack_top  = (u64)self->kstack.base + self->kstack.size;

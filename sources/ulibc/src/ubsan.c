@@ -6,8 +6,8 @@
 #include <slightx/mem/str.h>
 #include <slightx/mem/arena.h>
 
-#include <slightx/sys/io.h>
 #include <slightx/sys/proc.h>
+#include <slightx/io.h>
 
 
 #define is_aligned(value, alignment) !(value & (alignment - 1))
@@ -146,29 +146,6 @@ struct function_type_mismatch_info {
 
 // MARK: - utils
 
-
-[[gnu::no_sanitize("undefined")]]
-static void eprintv(const char *fmt, va_list args) {
-  char buf[4096] = {};
-
-  arena tmp;
-  arena_init(&tmp, make_span(buf, sizeof(buf)));
-  allocator a = arena_allocator(&tmp);
-
-  str formatted = str_vformat(a, fmt, args);
-  sys_puts(formatted);
-  sys_puts(str_literal("\r\n"));
-}
-
-
-[[gnu::no_sanitize("undefined")]]
-static void eprint(const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  eprintv(fmt, args);
-  va_end(args);
-}
-
 [[gnu::no_sanitize("undefined")]]
 [[noreturn]] static void report_abort(void) {
   sys_exit(127);
@@ -177,19 +154,19 @@ static void eprint(const char *fmt, ...) {
 
 [[gnu::no_sanitize("undefined")]]
 static void report_begin(const source_location *loc, str description) {
-  eprint("======== UNDEFINED BEHAVIOR DETECTED ========");
-  eprint("Description: %s", description);
-  eprint("Location:");
-  eprint("  file: %s",   strview_from_cstr(loc->filename));
-  eprint("  line: %u",   (u64)loc->line);
-  eprint("  column: %u", (u64)loc->column);
-  eprint("---------------------------------------------");
+  print("======== UNDEFINED BEHAVIOR DETECTED ========");
+  print("Description: %s", description);
+  print("Location:");
+  print("  file: %s",   strview_from_cstr(loc->filename));
+  print("  line: %u",   (u64)loc->line);
+  print("  column: %u", (u64)loc->column);
+  print("---------------------------------------------");
 }
 
 
 [[gnu::no_sanitize("undefined")]]
 static void report_end(void) {
-  eprint("=============================================");
+  print("=============================================");
 #ifdef CONFIG_UBSAN_ALWAYS_ABORT
   panic("ubsan");
 #endif
@@ -204,7 +181,7 @@ static void report_type_mismatch_nullptr(const type_mismatch_info *info, usize p
 
   report_begin(&info->location, str_literal("Null pointer dereference"));
 
-  eprint(
+  print(
     "%s null pointer of type %s",
     type_check_kinds[info->type_check_kind],
     strview_from_cstr(info->type->name)
@@ -218,7 +195,7 @@ static void report_type_mismatch_nullptr(const type_mismatch_info *info, usize p
 static void report_type_mismatch_alignment(const type_mismatch_info *info, usize ptr) {
   report_begin(&info->location, str_literal("Unaligned access"));
 
-  eprint(
+  print(
     "%s unaligned pointer %p of type %s (alignment %u)",
     type_check_kinds[info->type_check_kind],
     (void *)ptr,
@@ -234,7 +211,7 @@ static void report_type_mismatch_alignment(const type_mismatch_info *info, usize
 static void report_type_mismatch_objsize(const type_mismatch_info *info, usize ptr) {
   report_begin(&info->location, str_literal("Insufficient object size"));
 
-  eprint(
+  print(
     "%s address %p with insufficient space for type %s",
     type_check_kinds[info->type_check_kind],
     (void *)ptr,
@@ -288,7 +265,7 @@ void __ubsan_handle_type_mismatch_v1_abort(type_mismatch_info_v1 *info, usize pt
 void __ubsan_handle_pointer_overflow(pointer_overflow_info *info, usize base, usize result) {
   report_begin(&info->location, str_literal("Pointer overflow"));
 
-  eprint("Pointer operation overflow %p to %p", (void *)base, (void *)result);
+  print("Pointer operation overflow %p to %p", (void *)base, (void *)result);
 
   report_end();
 }
@@ -306,15 +283,15 @@ void __ubsan_handle_invalid_builtin(invalid_builtin_info *info) {
 
   switch (info->kind) {
     case 0:
-      eprint("Passed 0 to clz()");
+      print("Passed 0 to clz()");
       break;
 
     case 1:
-      eprint("Passed 0 to ctz()");
+      print("Passed 0 to ctz()");
       break;
 
     default:
-      eprint("Passed 0 to <unknown> (kind: %u)", (u64)info->kind);
+      print("Passed 0 to <unknown> (kind: %u)", (u64)info->kind);
       break;
   }
 
@@ -332,7 +309,7 @@ void __ubsan_handle_invalid_builtin_abort(invalid_builtin_info *info) {
 static void report_int_overflow(const overflow_info *info, usize lhs, usize rhs, str op) {
   if (is_signed(info->type)) {
     report_begin(&info->location, str_literal("Signed Integer overflow"));
-    eprint(
+    print(
       "%d %s %d can't be represented in type %s",
       (i64)lhs, op, (i64)rhs,
       strview_from_cstr(info->type->name)
@@ -340,7 +317,7 @@ static void report_int_overflow(const overflow_info *info, usize lhs, usize rhs,
   }
   else {
     report_begin(&info->location, str_literal("Unsigned Integer overflow"));
-    eprint(
+    print(
       "%u %s %u can't be represented in type %s",
       (u64)lhs, op, (u64)rhs,
       strview_from_cstr(info->type->name)
@@ -392,14 +369,14 @@ void __ubsan_handle_negate_overflow(overflow_info *info, usize operand) {
   report_begin(&info->location, str_literal("Negation overflow"));
 
   if (is_signed(info->type)) {
-    eprint(
+    print(
       "-%d can't be represented in type %s",
       (i64)operand,
       strview_from_cstr(info->type->name)
     );
   }
   else {
-    eprint(
+    print(
       "-%u can't be represented in type %s",
       (u64)operand,
       strview_from_cstr(info->type->name)
@@ -421,17 +398,17 @@ void __ubsan_handle_divrem_overflow(overflow_info *info, usize lhs, usize rhs) {
   report_begin(&info->location, str_literal("Division overflow"));
 
   if (is_signed(info->type) && (isize)rhs == -1) {
-    eprint(
+    print(
       "%d / -1 can't be represented in type %s",
       (i64)lhs,
       strview_from_cstr(info->type->name)
     );
   }
   else if (rhs == 0) {
-    eprint("division by zero");
+    print("division by zero");
   }
   else {
-    eprint(
+    print(
       "%u / %u can't be represented in type %s",
       (u64)lhs, (u64)rhs,
       strview_from_cstr(info->type->name)
@@ -452,23 +429,23 @@ void __ubsan_handle_shift_out_of_bounds(shift_out_of_bounds_info *info, usize lh
   report_begin(&info->location, str_literal("Shift out of bounds"));
 
   if (is_signed(info->rhs_type) && (isize)rhs < 0) {
-    eprint("shift exponent %d is negative", (i64)rhs);
+    print("shift exponent %d is negative", (i64)rhs);
   }
   else if ((usize)rhs >= int_width(info->lhs_type)) {
-    eprint(
+    print(
       "shift exponent %d is too large for type %s",
       (i64)rhs,
       strview_from_cstr(info->lhs_type->name)
     );
   }
   else if (is_signed(info->lhs_type) && (isize)lhs < 0) {
-    eprint(
+    print(
       "left shift of negative type %s",
       strview_from_cstr(info->lhs_type->name)
     );
   }
   else {
-    eprint(
+    print(
       "left shift of %u by %u places cannot be represented in type %s",
       (u64)lhs, (u64)rhs,
       strview_from_cstr(info->lhs_type->name)
@@ -490,14 +467,14 @@ void __ubsan_handle_out_of_bounds(out_of_bounds_info *info, usize index) {
   report_begin(&info->location, str_literal("Out of bounds"));
 
   if (is_signed(info->index_type)) {
-    eprint(
+    print(
       "index %d out of bounds for type %s",
       (i64)index,
       strview_from_cstr(info->array_type->name)
     );
   }
   else {
-    eprint(
+    print(
       "index %u out of bounds for type %s",
       (u64)index,
       strview_from_cstr(info->array_type->name)
@@ -517,7 +494,7 @@ void __ubsan_handle_out_of_bounds_abort(out_of_bounds_info *info, usize index) {
 [[gnu::no_sanitize("undefined")]]
 void __ubsan_handle_builtin_unreachable(unreachable_info *info) {
   report_begin(&info->location, str_literal("Unreachable"));
-  eprint("Execution reached an unreachable code path");
+  print("Execution reached an unreachable code path");
   report_end();
   report_abort();
 }
@@ -527,7 +504,7 @@ void __ubsan_handle_builtin_unreachable(unreachable_info *info) {
 void __ubsan_handle_nonnull_arg(nonnull_arg_info *info) {
   report_begin(&info->location, str_literal("Non-null argument"));
 
-  eprint(
+  print(
     "parameter %u at %s:%u:%u is declared as non-null but null was passed",
     (u64)info->param_index,
     strview_from_cstr(info->param_location.filename),
@@ -549,7 +526,7 @@ void __ubsan_handle_nonnull_arg_abort(nonnull_arg_info *info) {
 void __ubsan_handle_nonnull_return(nonnull_return_info *info) {
   report_begin(&info->location, str_literal("Non-null return"));
 
-  eprint(
+  print(
     "function at %s:%u:%u is declared as non-null returning but returned null",
     strview_from_cstr(info->ret_location.filename),
     (u64)info->ret_location.line,
@@ -582,14 +559,14 @@ void __ubsan_handle_load_invalid_value(invalid_value_info *info, usize value) {
 
   if (is_int(info->type)) {
     if (is_signed(info->type)) {
-      eprint(
+      print(
         "load of value %d, which is not a valid value for type %s",
         (i64)value,
         strview_from_cstr(info->type->name)
       );
     }
     else {
-      eprint(
+      print(
         "load of value %u, which is not a valid value for type %s",
         (u64)value,
         strview_from_cstr(info->type->name)
@@ -597,7 +574,7 @@ void __ubsan_handle_load_invalid_value(invalid_value_info *info, usize value) {
     }
   }
   else {
-    eprint(
+    print(
       "load of value, which is not a valid value for type %s",
       strview_from_cstr(info->type->name)
     );
@@ -617,7 +594,7 @@ void __ubsan_handle_load_invalid_value_abort(invalid_value_info *info, usize val
 void __ubsan_handle_vla_bound_not_positive(vla_bound_info *info, isize bound) {
   report_begin(&info->location, str_literal("Variable length array bound not positive"));
 
-  eprint("variable length array bound %d is not positive", (i64)bound);
+  print("variable length array bound %d is not positive", (i64)bound);
 
   report_end();
 }
@@ -633,7 +610,7 @@ void __ubsan_handle_vla_bound_not_positive_abort(vla_bound_info *info, isize bou
 void __ubsan_handle_function_type_mismatch(function_type_mismatch_info *info, usize func_ptr) {
   report_begin(&info->location, str_literal("Function type mismatch"));
 
-  eprint(
+  print(
     "call through function pointer %p to incorrect function type %s",
     (void *)func_ptr,
     strview_from_cstr(info->type->name)
