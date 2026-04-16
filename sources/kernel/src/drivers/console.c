@@ -6,6 +6,7 @@
 #include <klibc/sync/lock.h>
 
 #include <kernel/drivers/console.h>
+#include <kernel/drivers/serial.h>
 #include <kernel/halt.h>
 
 
@@ -75,5 +76,6 @@ void console_write(str s) {
   if (ft_ctx != NULL) {
     flanterm_write(ft_ctx, s.data, s.length);
   }
+  serial_puts(s);
   spinlock_release(&console_lock);
 }
