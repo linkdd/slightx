@@ -213,6 +213,8 @@ void *malloc(size_t size)
   void *ptr;
   struct boundary_tag *tag = NULL;
 
+  size = (size + _Alignof(struct boundary_tag) - 1) & ~(_Alignof(struct boundary_tag) - 1);
+
   liballoc_lock();
 
   if ( l_initialized == 0 )
