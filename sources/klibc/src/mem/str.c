@@ -150,6 +150,10 @@ strv str_split(allocator a, str s, str delimiter) {
     .count = 0,
   };
 
+  if (s.length == 0) {
+    return result;
+  }
+
   if (delimiter.length == 0) {
     return result;
   }
