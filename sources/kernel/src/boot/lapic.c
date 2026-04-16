@@ -19,15 +19,17 @@ static u32 lapic_ticks_per_ms;
 
 
 void lapic_write(u32 reg, u32 value) {
-  volatile u32 *lapic_base = (u32*)madt_lapic_base();
-  lapic_base[reg >> 2] = value;
-  (void)lapic_base[reg >> 2]; // flush
+  uptr lapic_base = (uptr)madt_lapic_base();
+  uptr addr       = lapic_base + (uptr)reg;
+  *(volatile u32 *)addr = value;
+  (void)*(volatile u32 *)addr; // flush
 }
 
 
 u32 lapic_read(u32 reg) {
-  volatile u32 *lapic_base = (u32*)madt_lapic_base();
-  return lapic_base[reg >> 2];
+  uptr lapic_base = (uptr)madt_lapic_base();
+  uptr addr       = lapic_base + (uptr)reg;
+  return *(volatile u32 *)addr;
 }
 
 
