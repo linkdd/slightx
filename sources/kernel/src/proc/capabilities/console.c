@@ -13,7 +13,7 @@ static void console_cap_release(cap_obj *obj) {
 }
 
 
-static i64 console_cap_send(cap_obj *obj, const_span msg) {
+static i64 console_cap_write(cap_obj *obj, const_span msg) {
   console_cap *cap = (console_cap *)obj;
   assert(cap != NULL);
 
@@ -30,8 +30,10 @@ static i64 console_cap_send(cap_obj *obj, const_span msg) {
 
 static const cap_ops console_cap_ops = {
   .release = console_cap_release,
-  .send    = console_cap_send,
-  .call    = NULL,
+  .read    = NULL,
+  .write   = console_cap_write,
+  .invoke  = NULL,
+  .map     = NULL,
   .ctl     = NULL,
 };
 

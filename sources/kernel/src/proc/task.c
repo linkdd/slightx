@@ -184,7 +184,7 @@ void task_init(task *self, const task_desc *desc) {
   assert(CONSOLE_CAP_ID == cap_table_add(
     &self->capabilities,
     console,
-    CAP_RIGHT_SEND,
+    CAP_RIGHT_WRITE,
     0
   ));
   cap_obj_decref(console);

@@ -11,9 +11,11 @@ typedef u32 cap_id;
 typedef enum : u32 {
   CAP_RIGHT_NONE = 0,
 
-  CAP_RIGHT_SEND = 1 << 0,
-  CAP_RIGHT_CALL = 1 << 1,
-  CAP_RIGHT_CTL  = 1 << 2,
+  CAP_RIGHT_READ   = 1 << 0,
+  CAP_RIGHT_WRITE  = 1 << 1,
+  CAP_RIGHT_INVOKE = 1 << 2,
+  CAP_RIGHT_MAP    = 1 << 3,
+  CAP_RIGHT_CTL    = 1 << 4,
 
   CAP_RIGHT_ALL = 0xFFFFFFFF,
 } cap_rights;
@@ -53,9 +55,11 @@ struct cap_obj {
 struct cap_ops {
   void (*release)(cap_obj *self);
 
-  i64 (*send)(cap_obj *obj, const_span msg);
-  i64 (*call)(cap_obj *obj, const_span msg, span reply);
-  i64 (*ctl) (cap_obj *obj, u64 cmd, uptr arg);
+  i64 (*read)  (cap_obj *obj,       span msg);
+  i64 (*write) (cap_obj *obj, const_span msg);
+  i64 (*invoke)(cap_obj *obj, const_span req, span reply);
+  i64 (*map)   (cap_obj *obj, void *addr, usize size, u8 flags, void **mapped_addr);
+  i64 (*ctl)   (cap_obj *obj, u64 cmd, uptr arg);
 };
 
 
