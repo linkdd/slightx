@@ -12,6 +12,7 @@ struct allocator {
   void *udata;
 };
 
+allocator default_allocator(void);
 
 void *allocate  (allocator a, usize sz);
 void *allocate_v(allocator a, usize nmemb, usize membsz);

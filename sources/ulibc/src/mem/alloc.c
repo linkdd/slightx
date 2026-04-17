@@ -1,6 +1,55 @@
 #include <slightx/mem/alloc.h>
 #include <slightx/mem/bytes.h>
+#include <slightx/sys/mem.h>
 #include <slightx/assert.h>
+
+
+static void *_default_allocate(void *udata, usize sz) {
+  (void)udata;
+  return sys_mmap(NULL, sz, MMAP_ACCESS_READ | MMAP_ACCESS_WRITE);
+}
+
+
+static void *_default_reallocate(void *udata, void *ptr, usize oldsz, usize newsz) {
+  (void)udata;
+
+  void *newptr = NULL;
+
+  if (newsz > 0) {
+    newptr = sys_mmap(NULL, newsz, MMAP_ACCESS_READ | MMAP_ACCESS_WRITE);
+  }
+
+  if (newsz > oldsz) {
+    memcpy(newptr, ptr, oldsz);
+  }
+
+  if (ptr != NULL) {
+    sys_munmap(ptr, oldsz);
+  }
+
+  return newptr;
+}
+
+
+static void _default_deallocate(void *udata, void *ptr, usize sz) {
+  (void)udata;
+
+  if (ptr != NULL) {
+    sys_munmap(ptr, sz);
+  }
+}
+
+
+allocator default_allocator(void) {
+  allocator a = {
+    .allocate   = _default_allocate,
+    .reallocate = _default_reallocate,
+    .deallocate = _default_deallocate,
+    .udata      = NULL,
+  };
+
+  return a;
+}
 
 
 void *allocate(allocator a, usize sz) {
