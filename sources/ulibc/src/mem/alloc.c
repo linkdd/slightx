@@ -1,54 +1,62 @@
+#include <liballoc.h>
+
 #include <slightx/mem/alloc.h>
 #include <slightx/mem/bytes.h>
 #include <slightx/sys/mem.h>
 #include <slightx/assert.h>
 
 
+static constexpr usize PAGE_SIZE = 4096;
+
+
+int liballoc_lock(void) {
+  return 0;
+}
+
+
+int liballoc_unlock(void) {
+  return 0;
+}
+
+
+void *liballoc_alloc(int page_count) {
+  return sys_mmap(NULL, page_count * PAGE_SIZE, MMAP_ACCESS_READ | MMAP_ACCESS_WRITE);
+}
+
+
+int liballoc_free(void *ptr, int page_count) {
+  sys_munmap(ptr, page_count * PAGE_SIZE);
+  return 0;
+}
+
+
 static void *_default_allocate(void *udata, usize sz) {
   (void)udata;
-  return sys_mmap(NULL, sz, MMAP_ACCESS_READ | MMAP_ACCESS_WRITE);
+  return malloc(sz);
 }
 
 
 static void *_default_reallocate(void *udata, void *ptr, usize oldsz, usize newsz) {
   (void)udata;
-
-  void *newptr = NULL;
-
-  if (newsz > 0) {
-    newptr = sys_mmap(NULL, newsz, MMAP_ACCESS_READ | MMAP_ACCESS_WRITE);
-  }
-
-  if (newsz > oldsz) {
-    memcpy(newptr, ptr, oldsz);
-  }
-
-  if (ptr != NULL) {
-    sys_munmap(ptr, oldsz);
-  }
-
-  return newptr;
+  (void)oldsz;
+  return realloc(ptr, newsz);
 }
 
 
 static void _default_deallocate(void *udata, void *ptr, usize sz) {
   (void)udata;
-
-  if (ptr != NULL) {
-    sys_munmap(ptr, sz);
-  }
+  (void)sz;
+  free(ptr);
 }
 
 
 allocator default_allocator(void) {
-  allocator a = {
-    .allocate   = _default_allocate,
+  return (allocator){
+    .allocate = _default_allocate,
     .reallocate = _default_reallocate,
     .deallocate = _default_deallocate,
-    .udata      = NULL,
+    .udata = NULL
   };
-
-  return a;
 }
 
 
