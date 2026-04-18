@@ -22,3 +22,16 @@ target_include_directories(${PROJECT_NAME}
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+
+
+add_library(${PROJECT_NAME}-user STATIC ${LIBALLOC_SOURCES} ${LIBALLOC_HEADERS})
+add_library(vendor::liballoc-user ALIAS ${PROJECT_NAME}-user)
+
+target_compile_options(${PROJECT_NAME}-user PRIVATE ${USERLAND_C_FLAGS} -Wno-sign-compare)
+target_compile_definitions(${PROJECT_NAME}-user PRIVATE ${USERLAND_DEFINITIONS})
+target_link_options(${PROJECT_NAME}-user PRIVATE ${USERLAND_LD_FLAGS})
+target_include_directories(${PROJECT_NAME}-user
+  PUBLIC ${LIBALLOC_INCLUDES}
+)
+
+set_target_properties(${PROJECT_NAME}-user PROPERTIES PREFIX "")
