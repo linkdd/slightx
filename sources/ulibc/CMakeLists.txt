@@ -14,5 +14,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${USERLAND_C_FLAGS})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${USERLAND_DEFINITIONS})
 target_link_options(${PROJECT_NAME} PRIVATE ${USERLAND_LD_FLAGS})
 target_include_directories(${PROJECT_NAME}
-  PUBLIC ${ULIBC_INCLUDES}
+  PUBLIC ${ULIBC_INCLUDES} ${LIBALLOC_INCLUDES}
 )
+
+target_link_libraries(${PROJECT_NAME} PUBLIC vendor::liballoc-user)
+
