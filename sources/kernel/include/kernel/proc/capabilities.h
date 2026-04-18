@@ -50,6 +50,8 @@ struct cap_obj {
   const cap_ops *ops;
   atomic_uint    refcount;
   u32            flags;
+
+  allocator a;
 };
 
 struct cap_ops {
@@ -62,6 +64,8 @@ struct cap_ops {
   i64 (*ctl)   (cap_obj *obj, u64 cmd, uptr arg);
 };
 
+
+void cap_obj_init(cap_obj *self, const cap_ops *ops, allocator a);
 
 cap_obj *cap_obj_incref(cap_obj *self);
 void     cap_obj_decref(cap_obj *self);

@@ -52,7 +52,7 @@ static void _default_deallocate(void *udata, void *ptr, usize sz) {
 
 allocator default_allocator(void) {
   return (allocator){
-    .allocate = _default_allocate,
+    .allocate   = _default_allocate,
     .reallocate = _default_reallocate,
     .deallocate = _default_deallocate,
     .udata = NULL

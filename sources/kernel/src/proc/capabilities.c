@@ -21,6 +21,15 @@ static inline u16 cap_id_get_gen(cap_id id) {
 
 
 // MARK: - obj
+void cap_obj_init(cap_obj *self, const cap_ops *ops, allocator a) {
+  assert(self != NULL);
+  assert(ops  != NULL);
+
+  atomic_init(&self->refcount, 1);
+  self->ops   = ops;
+  self->flags = 0;
+  self->a     = a;
+}
 
 cap_obj *cap_obj_incref(cap_obj *self) {
   assert(self != NULL);
@@ -32,7 +41,10 @@ cap_obj *cap_obj_incref(cap_obj *self) {
 void cap_obj_decref(cap_obj *self) {
   assert(self != NULL);
   if (atomic_fetch_sub_explicit(&self->refcount, 1, memory_order_acq_rel) == 1) {
-    self->ops->release(self);
+    if (self->ops->release != NULL) {
+      self->ops->release(self);
+    }
+    deallocate(self->a, self, sizeof(cap_obj));
   }
 }
 
