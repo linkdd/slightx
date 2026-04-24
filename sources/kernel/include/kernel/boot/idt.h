@@ -27,6 +27,7 @@ struct idt_gate {
 } __attribute__((packed));
 
 
+void idt_init(void);
 void idt_load(void);
 
 void idt_set_gate(usize idx, u64 base, u8 flags, u8 ist);

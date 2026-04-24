@@ -35,6 +35,7 @@ static void init_static_globals(void) {
   klogger_init();
 
   gdt_init();
+  idt_init();
   isr_init();
   irq_init();
   exc_init();

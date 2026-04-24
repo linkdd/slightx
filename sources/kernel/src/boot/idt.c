@@ -15,28 +15,25 @@ static idt_ptr  idt_desc = {
   .base  = (u64) &idt_gates
 };
 
-static bool idt_bootstrapped = false;
+
+void idt_init(void) {
+  memset(&idt_gates, 0, sizeof(idt_gate) * IDT_NUM_GATES);
+
+  for (usize idx = 0; idx < IDT_NUM_EXCEPTIONS; idx++) {
+    u8 ist = ((idx == EXC_DOUBLE_FAULT || idx == EXC_PAGE_FAULT || idx == EXC_NON_MASKABLE_INTERRUPT)
+      ? 0x01
+      : 0x00
+    );
+    idt_set_gate(idx, exc_stub_table[idx], 0x8E, ist);
+  }
+
+  for (usize idx = 0; idx < IDT_NUM_IRQS; idx++) {
+    idt_set_gate(idx + IDT_NUM_EXCEPTIONS, irq_stub_table[idx], 0x8E, 0x0);
+  }
+}
 
 
 void idt_load(void) {
-  if (!idt_bootstrapped) {
-    memset(&idt_gates, 0, sizeof(idt_gate) * IDT_NUM_GATES);
-
-    for (usize idx = 0; idx < IDT_NUM_EXCEPTIONS; idx++) {
-      u8 ist = ((idx == EXC_DOUBLE_FAULT || idx == EXC_PAGE_FAULT || idx == EXC_NON_MASKABLE_INTERRUPT)
-        ? 0x01
-        : 0x00
-      );
-      idt_set_gate(idx, exc_stub_table[idx], 0x8E, ist);
-    }
-
-    for (usize idx = 0; idx < IDT_NUM_IRQS; idx++) {
-      idt_set_gate(idx + IDT_NUM_EXCEPTIONS, irq_stub_table[idx], 0x8E, 0x0);
-    }
-
-    idt_bootstrapped = true;
-  }
-
   __asm__ volatile("lidt %0" :: "m"(idt_desc));
 }
 
