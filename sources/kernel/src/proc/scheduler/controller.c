@@ -7,7 +7,7 @@
 
 
 static spinlock scheduler_lock = {};
-static u32      next_task_id   = 1;
+static tid      next_task_id   = 1;
 
 
 static void idle_task_fn(void *arg) {
@@ -65,9 +65,9 @@ void scheduler_tick(u64 ns) {
 }
 
 
-u32 scheduler_get_next_tid(void) {
+tid scheduler_get_next_tid(void) {
   spinlock_acquire(&scheduler_lock);
-  u32 tid = next_task_id++;
+  tid tid = next_task_id++;
   spinlock_release(&scheduler_lock);
   return tid;
 }
@@ -80,7 +80,7 @@ task *scheduler_get_current_task(void) {
 }
 
 
-task *scheduler_get_task_by_id(u32 tid) {
+task *scheduler_get_task_by_id(tid tid) {
   usize cpu_count = mp_get_cpu_count();
 
   for (usize cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {

@@ -24,10 +24,10 @@ void scheduler_load(void);
 
 void scheduler_tick(u64 ns);
 
-u32 scheduler_get_next_tid(void);
+tid scheduler_get_next_tid(void);
 
 task *scheduler_get_current_task (void);
-task *scheduler_get_task_by_id   (u32 tid);
+task *scheduler_get_task_by_id   (tid tid);
 void  scheduler_kill_current_task(i32 exit_code);
 
 waiter scheduler_make_waiter (task *t);
