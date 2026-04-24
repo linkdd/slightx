@@ -73,7 +73,7 @@ static void cap_table__ensure_capacity(cap_table *self) {
     self->slots[i].rights    = 0;
     self->slots[i].flags     = 0;
     self->slots[i].gen       = 1;
-    self->slots[i].next_free = (i < new_capacity - 1) ? (i + 1) : self->free_head;
+    self->slots[i].next_free = CAP_INVALID_INDEX;
   }
 }
 
@@ -86,7 +86,7 @@ void cap_table_init(cap_table *self, allocator a, usize initial_capacity) {
   self->slots       = allocate_v(a, initial_capacity, sizeof(cap_slot));
   self->capacity    = initial_capacity;
   self->next_unused = 0;
-  self->free_head   = (initial_capacity > 0) ? 0 : CAP_INVALID_INDEX;
+  self->free_head   = CAP_INVALID_INDEX;
 
   for (usize i = 0; i < initial_capacity; i++) {
     self->slots[i].obj       = NULL;
