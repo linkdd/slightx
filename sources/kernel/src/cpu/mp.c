@@ -93,6 +93,8 @@ percpu_data *mp_get_percpu_data_of(usize processor_id) {
 
 
 static void mp_ap_fn_wrapper(struct limine_mp_info* cpu_info) {
+  __asm__ volatile("cli");
+
   uptr segment = (uptr)cpu_info->extra_argument;
   percpu_set_segment(segment);
 

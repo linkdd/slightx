@@ -18,12 +18,13 @@
 #define GRANULARITY_4K    (1 << 3)
 
 // Segments
-#define GDT_SEGMENT(idx)  ((idx) << 3)
-#define GDT_SEG_IDX_KCODE  5
-#define GDT_SEG_IDX_KDATA  6
-#define GDT_SEG_IDX_UDATA  7
-#define GDT_SEG_IDX_UCODE  8
-#define GDT_SEG_IDX_TSS    9
+#define GDT_SEGMENT(idx)    ((idx) << 3)
+#define GDT_SEG_IDX_KCODE   5
+#define GDT_SEG_IDX_KDATA   6
+#define GDT_SEG_IDX_UDATA   7
+#define GDT_SEG_IDX_UCODE   8
+#define GDT_SEG_IDX_TSS     9
+#define GDT_NUM_DESCRIPTORS (GDT_SEG_IDX_TSS + 2)
 
 // Privilege levels
 #define RING0              0b00
@@ -58,6 +59,6 @@ struct gdt_gate {
 
 
 void gdt_init(void);
-
 void gdt_load(void);
+
 void gdt_set_gate(usize segment, const gdt_gate *gate);

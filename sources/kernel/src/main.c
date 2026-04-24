@@ -34,7 +34,6 @@
 static void init_static_globals(void) {
   klogger_init();
 
-  gdt_init();
   idt_init();
   isr_init();
   irq_init();
@@ -44,7 +43,8 @@ static void init_static_globals(void) {
   vmm_init ();
   heap_init();
 
-  mp_init();
+  mp_init ();
+  gdt_init();
 
   scheduler_init();
   syscall_init  ();
@@ -52,10 +52,10 @@ static void init_static_globals(void) {
 
 
 static void ap_start(void) {
-  gdt_load();
-  tss_load();
   idt_load();
   pic_load();
+  gdt_load();
+  tss_load();
 
   lapic_configure_timer();
 
@@ -72,7 +72,6 @@ static void ap_start(void) {
 
 
 static void bootstrap(void) {
-  gdt_load();
   idt_load();
   pic_load();
 
@@ -81,6 +80,7 @@ static void bootstrap(void) {
   heap_load();
 
   mp_load ();
+  gdt_load();
   tss_load();
 
   acpi_load     ();

@@ -3,7 +3,9 @@
 #include <klibc/types.h>
 
 #include <kernel/mem/vmm.h>
+#include <kernel/boot/gdt.h>
 #include <kernel/boot/tss.h>
+
 #include <kernel/proc/scheduler/controller.h>
 
 
@@ -25,6 +27,7 @@ struct percpu_data {
 
   scheduler scheduler;
 
+  gdt_gate       gdt_descriptors[GDT_NUM_DESCRIPTORS];
   tss            tss;
   alignas(16) u8 isr_stack[ISR_STACK_SIZE];
 };
