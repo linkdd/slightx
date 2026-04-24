@@ -74,6 +74,7 @@ void     cap_obj_decref(cap_obj *self);
 void cap_table_init  (cap_table *self, allocator a, usize initial_capacity);
 void cap_table_deinit(cap_table *self);
 
-cap_id   cap_table_add(cap_table *self, cap_obj *obj, cap_rights rights, u32 flags);
+cap_id   cap_table_add(cap_table *self,              cap_obj *obj, cap_rights rights, u32 flags);
+bool     cap_table_set(cap_table *self, cap_id hint, cap_obj *obj, cap_rights rights, u32 flags);
 cap_obj *cap_table_get(cap_table *self, cap_id id, cap_rights required_rights);
 void     cap_table_del(cap_table *self, cap_id id);

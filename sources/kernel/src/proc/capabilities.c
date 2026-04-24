@@ -78,6 +78,38 @@ static void cap_table__ensure_capacity(cap_table *self) {
 }
 
 
+static bool cap_table__free_list_remove(cap_table *self, u16 idx) {
+  assert(self != NULL);
+  assert(idx  != CAP_INVALID_INDEX);
+
+  if (self->free_head == CAP_INVALID_INDEX) {
+    return false;
+  }
+
+  if (self->free_head == idx) {
+    self->free_head = self->slots[idx].next_free;
+    return true;
+  }
+
+  u16 prev = self->free_head;
+  while (prev != CAP_INVALID_INDEX) {
+    u16 cur = self->slots[prev].next_free;
+    if (cur == CAP_INVALID_INDEX) {
+      break;
+    }
+
+    if (cur == idx) {
+      self->slots[prev].next_free = self->slots[cur].next_free;
+      return true;
+    }
+
+    prev = cur;
+  }
+
+  return false;
+}
+
+
 void cap_table_init(cap_table *self, allocator a, usize initial_capacity) {
   assert(self != NULL);
   assert(initial_capacity <= 0xFFFF);
@@ -148,6 +180,63 @@ cap_id cap_table_add(cap_table *self, cap_obj *obj, cap_rights rights, u32 flags
   spinlock_release(&self->lock);
 
   return id;
+}
+
+
+bool cap_table_set(cap_table *self, cap_id hint, cap_obj *obj, cap_rights rights, u32 flags) {
+  assert(self != NULL);
+  assert(obj  != NULL);
+
+  u16 idx = cap_id_get_index(hint);
+  u16 gen = cap_id_get_gen  (hint);
+
+  if (idx == CAP_INVALID_INDEX || gen == 0) {
+    return false;
+  }
+
+  spinlock_acquire(&self->lock);
+
+  while (idx >= self->capacity) {
+    usize old_capacity = self->capacity;
+    cap_table__ensure_capacity(self);
+
+    if (self->capacity == old_capacity) {
+      spinlock_release(&self->lock);
+      return false;
+    }
+  }
+
+  cap_slot *slot = &self->slots[idx];
+
+  if (slot->obj != NULL || slot->gen != gen) {
+    spinlock_release(&self->lock);
+    return false;
+  }
+
+  if (idx < self->next_unused) {
+    if (!cap_table__free_list_remove(self, idx)) {
+      spinlock_release(&self->lock);
+      return false;
+    }
+  }
+  else {
+    for (u16 i = idx; i > self->next_unused; i--) {
+      u16 free_idx = (u16)(i - 1);
+
+      self->slots[free_idx].next_free = self->free_head;
+      self->free_head                 = free_idx;
+    }
+
+    self->next_unused = (u16)(idx + 1);
+  }
+
+  slot->obj       = cap_obj_incref(obj);
+  slot->rights    = rights;
+  slot->flags     = flags;
+  slot->next_free = CAP_INVALID_INDEX;
+
+  spinlock_release(&self->lock);
+  return true;
 }
 
 

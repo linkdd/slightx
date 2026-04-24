@@ -181,8 +181,9 @@ void task_init(task *self, const task_desc *desc) {
   cap_table_init(&self->capabilities, a, 16);
 
   cap_obj *console = make_console_cap(a);
-  assert(CONSOLE_CAP_ID == cap_table_add(
+  assert(cap_table_set(
     &self->capabilities,
+    CONSOLE_CAP_ID,
     console,
     CAP_RIGHT_WRITE,
     0
