@@ -585,6 +585,15 @@ void task_join(tid tid) {
     &current_task->lifecycle.blocker
   );
 
+  if (target_task->state.type == TH_TASK_STATE_ZOMBIE) {
+    waitqueue_del(
+      &target_task->lifecycle.joiners,
+      &current_task->lifecycle.blocker
+    );
+    task_release(target_task);
+    return;
+  }
+
   __asm__ volatile("cli" ::: "memory");
   task_set_blocked(current_task);
   scheduler_yield ();
