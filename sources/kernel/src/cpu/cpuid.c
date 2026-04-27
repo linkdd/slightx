@@ -1,17 +1,25 @@
 #include <kernel/cpu/cpuid.h>
 
 
+static u32 cpuid__range_base(u32 leaf) {
+  if      (leaf >= 0x80000000) return 0x80000000;
+  else if (leaf >= 0x40000000) return 0x40000000;
+  else                         return 0x00000000;
+}
+
+
 bool cpuid(u32 leaf, u32 subleaf, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx) {
-  u32 cpuid_max;
+  u32 base = cpuid__range_base(leaf);
+  u32 max_leaf;
 
   __asm__ volatile(
     "cpuid"
-    : "=a" (cpuid_max)
-    : "a" (leaf & 0x80000000)
-    : "ebx", "ecx", "edx"
+    : "=a" (max_leaf)
+    : "a" (base), "c" (0)
+    : "ebx", "edx"
   );
 
-  if (leaf > cpuid_max) {
+  if (leaf > max_leaf) {
     return false;
   }
 
