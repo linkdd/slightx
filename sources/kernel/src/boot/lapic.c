@@ -10,6 +10,7 @@
 
 #include <kernel/mem/vmm.h>
 
+#include <kernel/panic.h>
 #include <kernel/halt.h>
 
 
@@ -79,17 +80,17 @@ void lapic_calibrate(void) {
     if (inb(0x61) & (1 << 5)) {
       u32 after   = lapic_read(APIC_REG_CURRCNT);
       u32 elapsed = 0xFFFFFFFF - after;
-      if (elapsed == 0) elapsed = 1;
+
+      if (elapsed < 10) {
+        panic("[lapic] calibrate: implausible LAPIC count %d in 10ms", (i64)elapsed);
+      }
 
       lapic_ticks_per_ms = elapsed / 10;
-      if (lapic_ticks_per_ms == 0) lapic_ticks_per_ms = 1;
-
       return;
     }
   }
 
-  // fallback
-  lapic_ticks_per_ms = 1'000'000;
+  panic("[lapic] calibrate: PIT timeout, no usable timebase");
 }
 
 
