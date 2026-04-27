@@ -5,6 +5,7 @@
 
 void *allocate(allocator a, usize sz) {
   assert(a.allocate != NULL);
+  assert(sz > 0);
 
   void *ptr = a.allocate(a.udata, sz);
   assert_release(ptr != NULL);
@@ -16,6 +17,7 @@ void *allocate(allocator a, usize sz) {
 
 void *allocate_aligned(allocator a, usize sz, usize align) {
   assert(a.allocate_aligned != NULL);
+  assert(sz > 0);
 
   assert_release(align % 2 == 0);
   assert_release(align >= alignof(max_align_t));
@@ -30,6 +32,8 @@ void *allocate_aligned(allocator a, usize sz, usize align) {
 
 void *allocate_v(allocator a, usize nmemb, usize membsz) {
   assert(a.allocate != NULL);
+  assert(nmemb > 0);
+  assert(membsz > 0);
 
   assert_release(SIZE_MAX / nmemb >= membsz);
   usize sz = nmemb * membsz;
