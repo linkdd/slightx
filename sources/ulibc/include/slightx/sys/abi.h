@@ -11,4 +11,5 @@ enum : i64 {
   EINVAL = 1,
   ENOMEM = 2,
   ENOSUP = 3,
+  EFAULT = 4,
 };
