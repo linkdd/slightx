@@ -115,6 +115,7 @@ task *runqueue_find_by_id(runqueue *self, u32 tid) {
     iter = iter->scheduling.siblings.next
   ) {
     if (iter->id == tid) {
+      task_acquire(iter);
       spinlock_release(&self->lock);
       return iter;
     }

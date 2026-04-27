@@ -113,6 +113,8 @@ void task_init(task *self, const task_desc *desc) {
   self->uid   = desc->uid;
   self->gid   = desc->gid;
 
+  atomic_store_explicit(&self->refcount, 1, memory_order_relaxed);
+
   self->state = (task_state){
     .type = TH_TASK_STATE_NEW,
   };
@@ -569,6 +571,7 @@ void task_join(tid tid) {
   assert_release((target_task->flags & TH_TASK_FLAG_DETACHED) == 0);
 
   if (target_task->state.type == TH_TASK_STATE_ZOMBIE) {
+    task_release(target_task);
     return;
   }
 
@@ -586,10 +589,29 @@ void task_join(tid tid) {
   task_set_blocked(current_task);
   scheduler_yield ();
   __asm__ volatile("sti" ::: "memory");
+
+  task_release(target_task);
 }
 
 
 [[noreturn]] void task_exit(i32 exit_code) {
   scheduler_kill_current_task(exit_code);
   unreachable();
+}
+
+
+// MARK: - refcounting
+
+void task_acquire(task *self) {
+  assert(self != NULL);
+  usize prev = atomic_fetch_add_explicit(&self->refcount, 1, memory_order_acq_rel);
+  assert_release(prev != 0);
+}
+
+
+bool task_release(task *self) {
+  assert(self != NULL);
+  usize prev = atomic_fetch_sub_explicit(&self->refcount, 1, memory_order_acq_rel);
+  assert_release(prev != 0);
+  return prev == 1;
 }

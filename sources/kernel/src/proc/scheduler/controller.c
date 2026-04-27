@@ -85,12 +85,12 @@ task *scheduler_get_task_by_id(tid tid) {
 
   for (usize cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {
     percpu_data *cpu_data = mp_get_percpu_data_of(cpu_idx);
-    runqueue    *rq       = &cpu_data->scheduler.tasks;
 
-    task *t = runqueue_find_by_id(rq, tid);
-    if (t != NULL) {
-      return t;
-    }
+    task *t = runqueue_find_by_id(&cpu_data->scheduler.tasks, tid);
+    if (t != NULL) return t;
+
+    t = runqueue_find_by_id(&cpu_data->scheduler.cleanup, tid);
+    if (t != NULL) return t;
   }
 
   return NULL;
@@ -106,6 +106,9 @@ void scheduler_kill_current_task(i32 exit_code) {
 
   __asm__ volatile("cli" ::: "memory");
   runqueue_enqueue(&cpu_data->scheduler.cleanup, current_task);
+
+  task_release(current_task);
+
   scheduler_yield();
 }
 
@@ -155,10 +158,7 @@ void scheduler_cleanup(void) {
     task *next = t->scheduling.siblings.next;
     task *prev = t->scheduling.siblings.prev;
 
-    if (
-      (t->flags & TH_TASK_FLAG_DETACHED) != 0 ||
-      waitqueue_is_empty(&t->lifecycle.joiners)
-    ) {
+    if (atomic_load_explicit(&t->refcount, memory_order_acquire) == 0) {
       if (prev != NULL) {
         prev->scheduling.siblings.next = next;
       }
@@ -176,6 +176,7 @@ void scheduler_cleanup(void) {
       cpu_data->scheduler.cleanup.count -= 1;
 
       task_deinit(t);
+      deallocate(heap_allocator(), t, sizeof(task));
     }
 
     t = next;
