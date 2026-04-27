@@ -400,18 +400,32 @@ void task_set_zombie(task *self, i32 exit_code) {
 
 // MARK: - memory
 
+static bool task__round_to_page(usize length, usize *out) {
+  if (length == 0)                                 return false;
+  if (length > SIZE_MAX - (MM_VIRT_PAGE_SIZE - 1)) return false;
+
+  *out = align_size_up(length, MM_VIRT_PAGE_SIZE);
+
+  return true;
+}
+
+
 void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
   assert(self != NULL);
 
-  if (length == 0) return NULL;
-
-  length = align_size_up(length, MM_VIRT_PAGE_SIZE);
+  if (!task__round_to_page(length, &length)) return NULL;
 
   if ((flags & TASK_MMAP_FIXED) != 0) {
+    uptr base = (uptr)addr;
+
+    // Bounds: must be page-aligned, non-NULL, and base+length must not wrap
+    // nor cross out of the user-accessible range.
     if (
-      addr == NULL                                    ||
-      !is_ptr_aligned((uptr)addr, MM_VIRT_PAGE_SIZE)  ||
-      task__mapping_overlaps(self, (uptr)addr, length)
+      addr == NULL                               ||
+      !is_ptr_aligned(base, MM_VIRT_PAGE_SIZE)   ||
+      base > USER_STACK_TOP                      ||
+      length > USER_STACK_TOP - base             ||
+      task__mapping_overlaps(self, base, length)
     ) {
       return NULL;
     }
@@ -420,9 +434,16 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
     uptr search_base  = 0x000100000000000ULL;
     uptr search_limit = USER_STACK_TOP;
 
+    if (length > search_limit - search_base) return NULL;
+    uptr last_candidate = search_limit - length;
+
     bool found = false;
 
-    for (uptr candidate = search_base; candidate + length < search_limit; candidate += MM_VIRT_PAGE_SIZE) {
+    for (
+      uptr candidate = search_base;
+      candidate <= last_candidate;
+      candidate += MM_VIRT_PAGE_SIZE
+    ) {
       if (!task__mapping_overlaps(self, candidate, length)) {
         addr  = (void *)candidate;
         found = true;
@@ -481,8 +502,13 @@ void task_munmap(task *self, void *addr, usize length) {
   if (length == 0 || addr == NULL) return;
 
   uptr  unmap_base = (uptr)addr;
-  usize unmap_len  = align_size_up(length, MM_VIRT_PAGE_SIZE);
-  uptr  unmap_end  = unmap_base + unmap_len;
+  usize unmap_len;
+  if (!task__round_to_page(length, &unmap_len)) return;
+
+  if (unmap_base > USER_STACK_TOP)              return;
+  if (unmap_len  > USER_STACK_TOP - unmap_base) return;
+
+  uptr unmap_end = unmap_base + unmap_len;
 
   for (task_mapping *m = self->mappings; m != NULL; m = m->next) {
     uptr m_base = m->vaddr.addr;
