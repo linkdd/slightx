@@ -34,6 +34,7 @@ set(USERLAND_C_FLAGS
   -Wall
   -Wextra
   -ffreestanding
+  -fno-stack-protector
   -fno-pie
   -fno-pic
   -march=x86-64
