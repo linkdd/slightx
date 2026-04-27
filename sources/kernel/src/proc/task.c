@@ -83,6 +83,12 @@ static bool task__mapping_overlaps(task *self, uptr base, usize length) {
 }
 
 
+static bool task__range_hits_reserved(uptr base, usize length) {
+  uptr end = base + length;
+  return !(end <= USER_STARTUP_BASE || base >= USER_STACK_TOP);
+}
+
+
 static void task__del_mapping(task *self, task_mapping *mapping) {
   assert(self != NULL);
   assert(mapping != NULL);
@@ -421,12 +427,14 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
     uptr base = (uptr)addr;
 
     // Bounds: must be page-aligned, non-NULL, and base+length must not wrap
-    // nor cross out of the user-accessible range.
+    // nor cross out of the user-accessible range, nor land in any kernel-
+    // reserved sub-range (startup info / user stack).
     if (
       addr == NULL                               ||
       !is_ptr_aligned(base, MM_VIRT_PAGE_SIZE)   ||
       base > USER_STACK_TOP                      ||
       length > USER_STACK_TOP - base             ||
+      task__range_hits_reserved(base, length)    ||
       task__mapping_overlaps(self, base, length)
     ) {
       return NULL;
@@ -434,7 +442,7 @@ void *task_mmap(task *self, void *addr, usize length, task_mmap_flags flags) {
   }
   else {
     uptr search_base  = 0x000100000000000ULL;
-    uptr search_limit = USER_STACK_TOP;
+    uptr search_limit = USER_STARTUP_BASE;
 
     if (length > search_limit - search_base) return NULL;
     uptr last_candidate = search_limit - length;
