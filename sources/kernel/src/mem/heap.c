@@ -11,6 +11,7 @@
 #include <kernel/mem/heap.h>
 #include <kernel/mem/hhdm.h>
 #include <kernel/mem/pmm.h>
+#include <kernel/panic.h>
 
 
 typedef struct heap_block_hdr heap_block_hdr;
@@ -179,6 +180,37 @@ int liballoc_unlock(void) {
 
 
 // MARK: allocator
+
+static heap_block_hdr *heap__hdr_for(void *ptr) {
+  if (ptr == NULL) return NULL;
+
+  uptr p = (uptr)ptr;
+
+  if (p < heap_start.addr + sizeof(heap_block_hdr)) return NULL;
+  if (p >= heap_end.addr)                           return NULL;
+
+  heap_block_hdr *hdr = (heap_block_hdr *)(p - sizeof(heap_block_hdr));
+
+  if (!is_alignment_valid(hdr->align))                        return NULL;
+  if (hdr->align  < alignof(max_align_t))                     return NULL;
+  if (hdr->offset >= hdr->align)                              return NULL;
+  if (hdr->size   <  sizeof(heap_block_hdr) + hdr->align - 1) return NULL;
+
+  uptr base = (uptr)hdr->base;
+  if (base <  heap_start.addr)          return NULL;
+  if (base >= heap_end.addr)            return NULL;
+  if (hdr->size > heap_end.addr - base) return NULL;
+
+  if (base + sizeof(heap_block_hdr) + hdr->offset != p) return NULL;
+  if (!is_ptr_aligned(p, hdr->align))                   return NULL;
+
+  if (hdr == NULL) {
+    panic("[heap] invalid or corrupted chunk header for %x", (i64)(uptr)ptr);
+  }
+  return hdr;
+}
+
+
 static void *heap_allocate_aligned(void *udata, usize sz, usize align) {
   (void)udata;
 
@@ -211,51 +243,49 @@ static void *heap_allocate(void *udata, usize sz) {
 
 static void *heap_reallocate(void *udata, void *ptr, usize oldsz, usize newsz) {
   (void)udata;
-  (void)oldsz;
 
   if (ptr == NULL) {
     return heap_allocate(udata, newsz);
   }
-  else if (newsz == 0) {
-    heap_block_hdr *hdr = (heap_block_hdr*)((uptr)ptr - sizeof(heap_block_hdr));
-    free(hdr->base);
+
+  heap_block_hdr *old_hdr = heap__hdr_for(ptr);
+
+  if (newsz == 0) {
+    free(old_hdr->base);
     return NULL;
   }
-  else {
-    heap_block_hdr *old_hdr = (heap_block_hdr*)((uptr)ptr - sizeof(heap_block_hdr));
 
-    if (!is_ptr_aligned((uptr)ptr, old_hdr->align)) {
-      return NULL;
-    }
+  usize align        = old_hdr->align;
+  usize old_offset   = old_hdr->offset;
+  usize old_totalsz  = old_hdr->size;
+  usize old_payload  = old_totalsz - sizeof(heap_block_hdr) - old_offset;
+  usize copy         = oldsz < newsz ? oldsz : newsz;
+  if (copy > old_payload) copy = old_payload;
 
-    usize align = old_hdr->align;
-    usize copy  = (oldsz < newsz ? oldsz : newsz);
-
-    usize  new_totalsz = newsz + sizeof(heap_block_hdr) + (align - 1);
-    void  *new_base    = realloc(old_hdr->base, new_totalsz);
-    if (new_base == NULL) {
-      return NULL;
-    }
-
-    uptr  new_raw = (uptr)new_base + sizeof(heap_block_hdr);
-    uptr  new_ptr = align_ptr_up(new_raw, align);
-    usize new_off = new_ptr - new_raw;
-
-    void *old_payload_in_new_block = new_base + sizeof(heap_block_hdr) + old_hdr->offset;
-    void *new_payload_location     = (void*)new_ptr;
-
-    if (new_payload_location != old_payload_in_new_block) {
-      memmove(new_payload_location, old_payload_in_new_block, copy);
-    }
-
-    heap_block_hdr *new_hdr = (heap_block_hdr*)(new_ptr - sizeof(heap_block_hdr));
-    new_hdr->base           = new_base;
-    new_hdr->size           = new_totalsz;
-    new_hdr->align          = align;
-    new_hdr->offset         = new_off;
-
-    return (void*)new_ptr;
+  usize  new_totalsz = newsz + sizeof(heap_block_hdr) + (align - 1);
+  void  *new_base    = realloc(old_hdr->base, new_totalsz);
+  if (new_base == NULL) {
+    return NULL;
   }
+
+  uptr  new_raw = (uptr)new_base + sizeof(heap_block_hdr);
+  uptr  new_ptr = align_ptr_up(new_raw, align);
+  usize new_off = new_ptr - new_raw;
+
+  void *old_payload_in_new_block = (u8 *)new_base + sizeof(heap_block_hdr) + old_offset;
+  void *new_payload_location     = (void *)new_ptr;
+
+  if (new_payload_location != old_payload_in_new_block) {
+    memmove(new_payload_location, old_payload_in_new_block, copy);
+  }
+
+  heap_block_hdr *new_hdr = (heap_block_hdr *)(new_ptr - sizeof(heap_block_hdr));
+  new_hdr->base           = new_base;
+  new_hdr->size           = new_totalsz;
+  new_hdr->align          = align;
+  new_hdr->offset         = new_off;
+
+  return (void *)new_ptr;
 }
 
 
@@ -263,7 +293,9 @@ static void heap_deallocate(void *udata, void *ptr, usize sz) {
   (void)udata;
   (void)sz;
 
-  heap_block_hdr *hdr = (heap_block_hdr*)((uptr)ptr - sizeof(heap_block_hdr));
+  if (ptr == NULL) return;
+
+  heap_block_hdr *hdr = heap__hdr_for(ptr);
   free(hdr->base);
 }
 
