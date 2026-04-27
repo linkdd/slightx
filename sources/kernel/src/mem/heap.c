@@ -41,6 +41,7 @@ void heap_init(void) {
 
 void heap_load(void) {
   LIMINE_GET_RESP(hhdm);
+  assert_release(hhdm_response != NULL);
 
   usize phys_mem_size = pmm_get_top();
 
