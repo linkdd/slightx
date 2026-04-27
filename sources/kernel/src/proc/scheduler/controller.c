@@ -91,6 +91,12 @@ task *scheduler_get_task_by_id(tid tid) {
 
     t = runqueue_find_by_id(&cpu_data->scheduler.cleanup, tid);
     if (t != NULL) return t;
+
+    task *cur = __atomic_load_n(&cpu_data->scheduler.current, __ATOMIC_ACQUIRE);
+    if (cur != NULL && cur->id == tid && task_try_acquire(cur)) {
+      if (cur->id == tid) return cur;
+      task_release(cur);
+    }
   }
 
   return NULL;
@@ -201,7 +207,7 @@ void scheduler_yield(void) {
   }
   assert(new_task != NULL);
 
-  cpu_data->scheduler.current = new_task;
+  __atomic_store_n(&cpu_data->scheduler.current, new_task, __ATOMIC_RELEASE);
 
   if (new_task != cpu_data->scheduler.idle) {
     task_set_running(new_task, cpu_data->processor_id);

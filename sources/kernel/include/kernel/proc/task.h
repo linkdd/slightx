@@ -155,8 +155,9 @@ typedef enum : u8 {
 void task_init  (task *self, const task_desc *desc);
 void task_deinit(task *self);
 
-void task_acquire(task *self);
-bool task_release(task *self);
+void task_acquire    (task *self);
+bool task_release    (task *self);
+bool task_try_acquire(task *self);
 
 void task_set_ready  (task *self);
 void task_set_running(task *self, usize processor_id);

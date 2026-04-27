@@ -609,6 +609,25 @@ void task_acquire(task *self) {
 }
 
 
+bool task_try_acquire(task *self) {
+  assert(self != NULL);
+
+  usize cur = atomic_load_explicit(&self->refcount, memory_order_acquire);
+  while (cur != 0) {
+    if (
+      atomic_compare_exchange_weak_explicit(
+        &self->refcount, &cur, cur + 1,
+        memory_order_acq_rel, memory_order_acquire
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 bool task_release(task *self) {
   assert(self != NULL);
   usize prev = atomic_fetch_sub_explicit(&self->refcount, 1, memory_order_acq_rel);
