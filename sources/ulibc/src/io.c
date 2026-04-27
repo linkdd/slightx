@@ -4,7 +4,7 @@
 
 
 void puts(str s) {
-  sys_capwrite(CONSOLE_CAP_ID, make_const_span(s.data, s.length));
+  (void)sys_capwrite(CONSOLE_CAP_ID, make_const_span(s.data, s.length));
 }
 
 
