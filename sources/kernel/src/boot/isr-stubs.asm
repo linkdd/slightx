@@ -12,6 +12,7 @@ global irq_stub_table
 global lapic_timer_stub
 global lapic_panic_stub
 global lapic_spurious_stub
+global lapic_tlb_flush_stub
 
 %macro pushagrd 0
   push rax
@@ -197,6 +198,11 @@ lapic_timer_stub:
 lapic_panic_stub:
   push qword 0
   push qword 0xFE
+  jmp isr_common_stub
+
+lapic_tlb_flush_stub:
+  push qword 0
+  push qword 0xFD
   jmp isr_common_stub
 
 lapic_spurious_stub:

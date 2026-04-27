@@ -15,9 +15,10 @@ void isr_init(void) {
     isr_table[IDT_NUM_EXCEPTIONS + i] = irq_handler;
   }
 
-  isr_table[IDT_GATE_LAPIC_TIMER]    = lapic_timer_handler;
-  isr_table[IDT_GATE_LAPIC_PANIC]    = lapic_panic_handler;
-  isr_table[IDT_GATE_LAPIC_SPURIOUS] = lapic_spurious_handler;
+  isr_table[IDT_GATE_LAPIC_TIMER]     = lapic_timer_handler;
+  isr_table[IDT_GATE_LAPIC_PANIC]     = lapic_panic_handler;
+  isr_table[IDT_GATE_LAPIC_SPURIOUS]  = lapic_spurious_handler;
+  isr_table[IDT_GATE_LAPIC_TLB_FLUSH] = lapic_tlb_flush_handler;
 }
 
 

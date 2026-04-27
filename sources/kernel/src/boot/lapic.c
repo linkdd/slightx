@@ -8,12 +8,15 @@
 #include <kernel/cpu/ioport.h>
 #include <kernel/cpu/mp.h>
 
+#include <kernel/mem/vmm.h>
+
 #include <kernel/halt.h>
 
 
-extern void lapic_timer_stub   (void);
-extern void lapic_panic_stub   (void);
-extern void lapic_spurious_stub(void);
+extern void lapic_timer_stub    (void);
+extern void lapic_panic_stub    (void);
+extern void lapic_spurious_stub (void);
+extern void lapic_tlb_flush_stub(void);
 
 static u32 lapic_ticks_per_ms;
 
@@ -97,10 +100,17 @@ void lapic_send_panic_ipi(void) {
 }
 
 
+void lapic_send_tlb_flush_ipi(void) {
+  lapic_write(APIC_REG_ICR_HIGH, 0);
+  lapic_write(APIC_REG_ICR_LOW,  (0b11 << 18) | IDT_GATE_LAPIC_TLB_FLUSH);
+}
+
+
 void lapic_configure_timer(void) {
-  idt_set_gate(IDT_GATE_LAPIC_TIMER,    (u64)lapic_timer_stub,    0x8E, 0x01);
-  idt_set_gate(IDT_GATE_LAPIC_PANIC,    (u64)lapic_panic_stub,    0x8E, 0x01);
-  idt_set_gate(IDT_GATE_LAPIC_SPURIOUS, (u64)lapic_spurious_stub, 0x8E, 0x01);
+  idt_set_gate(IDT_GATE_LAPIC_TIMER,     (u64)lapic_timer_stub,     0x8E, 0x01);
+  idt_set_gate(IDT_GATE_LAPIC_PANIC,     (u64)lapic_panic_stub,     0x8E, 0x01);
+  idt_set_gate(IDT_GATE_LAPIC_SPURIOUS,  (u64)lapic_spurious_stub,  0x8E, 0x01);
+  idt_set_gate(IDT_GATE_LAPIC_TLB_FLUSH, (u64)lapic_tlb_flush_stub, 0x8E, 0x01);
 
   lapic_enable_sw();
   lapic_program_timer_periodic(lapic_ticks_per_ms * LAPIC_TIMER_TICK_MS);
@@ -124,5 +134,12 @@ void lapic_panic_handler(interrupt_frame *iframe) {
 
 void lapic_spurious_handler(interrupt_frame *iframe) {
   (void)iframe;
+  lapic_eoi();
+}
+
+
+void lapic_tlb_flush_handler(interrupt_frame *iframe) {
+  (void)iframe;
+  vmm_tlb_flush_handle();
   lapic_eoi();
 }

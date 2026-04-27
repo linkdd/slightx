@@ -14,12 +14,20 @@
 #include <kernel/cpu/percpu.h>
 #include <kernel/cpu/mp.h>
 
+#include <kernel/boot/lapic.h>
+
 #include <klibc/mem/align.h>
 #include <klibc/mem/bytes.h>
 
 
 static page_map kernel_page_map = {};
 static spinlock vmm_lock        = {};
+
+
+static spinlock      tlb_shootdown_lock  = {};
+static uptr          tlb_shootdown_base  = 0;
+static usize         tlb_shootdown_count = 0;
+static _Atomic usize tlb_shootdown_ack   = 0;
 
 
 static bool vmm__pages_1gb_support(void) {
@@ -218,6 +226,7 @@ void pagefault_handler(interrupt_frame *iframe, interrupt_controlflow *cf) {
 // MARK: init
 void vmm_init(void) {
   spinlock_init(&vmm_lock);
+  spinlock_init(&tlb_shootdown_lock);
 }
 
 
@@ -415,6 +424,56 @@ void vmm_invalidate_page(virtual_address va) {
     : : "b"(va.addr)
     : "memory"
   );
+}
+
+
+void vmm_shootdown_range(virtual_address va_base, usize page_count) {
+  if (page_count == 0) return;
+
+  usize cpu_count = mp_get_cpu_count();
+
+  if (cpu_count <= 1) {
+    for (usize i = 0; i < page_count; i++) {
+      virtual_address va = { .addr = va_base.addr + i * MM_VIRT_PAGE_SIZE };
+      vmm_invalidate_page(va);
+    }
+    return;
+  }
+
+  spinlock_acquire(&tlb_shootdown_lock);
+
+  tlb_shootdown_base  = va_base.addr;
+  tlb_shootdown_count = page_count;
+  atomic_store_explicit(&tlb_shootdown_ack, 0, memory_order_release);
+
+  lapic_send_tlb_flush_ipi();
+
+  for (usize i = 0; i < page_count; i++) {
+    virtual_address va = { .addr = va_base.addr + i * MM_VIRT_PAGE_SIZE };
+    vmm_invalidate_page(va);
+  }
+
+  usize expected = cpu_count - 1;
+  while (atomic_load_explicit(&tlb_shootdown_ack, memory_order_acquire) < expected) {
+    pause();
+  }
+
+  spinlock_release(&tlb_shootdown_lock);
+}
+
+
+void vmm_tlb_flush_handle(void) {
+  (void)atomic_load_explicit(&tlb_shootdown_ack, memory_order_acquire);
+
+  uptr  base  = tlb_shootdown_base;
+  usize count = tlb_shootdown_count;
+
+  for (usize i = 0; i < count; i++) {
+    virtual_address va = { .addr = base + i * MM_VIRT_PAGE_SIZE };
+    vmm_invalidate_page(va);
+  }
+
+  atomic_fetch_add_explicit(&tlb_shootdown_ack, 1, memory_order_release);
 }
 
 

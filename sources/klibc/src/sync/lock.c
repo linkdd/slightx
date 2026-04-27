@@ -2,7 +2,7 @@
 #include <klibc/assert.h>
 
 
-static void pause(void) {
+void pause(void) {
   __builtin_ia32_pause();
 }
 

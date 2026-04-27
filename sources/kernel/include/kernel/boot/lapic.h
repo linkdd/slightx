@@ -22,6 +22,7 @@
 #define APIC_BASE_ENABLE          (1 << 11)
 
 #define IDT_GATE_LAPIC_TIMER      0xE0
+#define IDT_GATE_LAPIC_TLB_FLUSH  0xFD
 #define IDT_GATE_LAPIC_PANIC      0xFE
 #define IDT_GATE_LAPIC_SPURIOUS   0xFF
 
@@ -37,8 +38,10 @@ void lapic_eoi  (void);
 void lapic_calibrate      (void);
 void lapic_configure_timer(void);
 
-void lapic_send_panic_ipi(void);
+void lapic_send_panic_ipi    (void);
+void lapic_send_tlb_flush_ipi(void);
 
-void lapic_timer_handler   (interrupt_frame *iframe);
-void lapic_panic_handler   (interrupt_frame *iframe);
-void lapic_spurious_handler(interrupt_frame *iframe);
+void lapic_timer_handler    (interrupt_frame *iframe);
+void lapic_panic_handler    (interrupt_frame *iframe);
+void lapic_spurious_handler (interrupt_frame *iframe);
+void lapic_tlb_flush_handler(interrupt_frame *iframe);

@@ -525,6 +525,9 @@ void task_munmap(task *self, void *addr, usize length) {
           vmm_unmap(self->pmap, vaddr);
           pmm_free (paddr, 1);
         }
+
+        virtual_address va_base = { .addr = m_base };
+        vmm_shootdown_range(va_base, m->page_count);
       }
 
       task__del_mapping(self, m);

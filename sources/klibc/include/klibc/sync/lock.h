@@ -15,6 +15,8 @@ struct syncpoint {
 };
 
 
+void pause(void);
+
 void spinlock_init(spinlock *self);
 
 void spinlock_acquire    (spinlock *self);
